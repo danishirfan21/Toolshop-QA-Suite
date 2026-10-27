@@ -66,7 +66,8 @@ test.describe('checkout', () => {
 
     const res = await customerApi.call('post', '/invoices', invoiceBody(cartId, { ...place, city: 'Nowhere' }));
     expect(res.status()).toBe(422);
-    expect(Object.keys((await res.json()).errors)).toContain('billing_country');
+    // The self-hosted 422 body has no `errors` key, so compare the raw body; a failure prints it.
+    expect(JSON.stringify(await res.json())).toContain('billing_country');
   });
 
   test('creating an invoice without a token is 401', async ({ request }) => {
