@@ -63,6 +63,33 @@ jobs:
 
       - run: npx playwright install --with-deps chromium
       - run: npm test
+      - name: TEMP probe (lock expiry/unlock, rate limit, checkout repeat)
+        if: always()
+        run: |
+          H='Content-Type: application/json'; A='Accept: application/json'
+          echo "== lockout on a throwaway user =="
+          EMAIL="probe-$(date +%s)@example.com"; PW='Qa-Suite#7731xZq!'
+          curl -s -w '\nregister: %{http_code}\n' -X POST "$API_URL/users/register" -H "$H" -H "$A" -d "{\"first_name\":\"Probe\",\"last_name\":\"User\",\"address\":{\"street\":\"Test street\",\"city\":\"Amsterdam\",\"state\":\"NH\",\"country\":\"NL\",\"postal_code\":\"1122AB\"},\"phone\":\"0612345678\",\"dob\":\"1990-01-01\",\"email\":\"$EMAIL\",\"password\":\"$PW\"}" | tee /tmp/reg.out | head -c 600; echo
+          UID_=$(head -n1 /tmp/reg.out | python3 -c 'import sys,json; print(json.load(sys.stdin).get("id",""))' 2>/dev/null)
+          echo "user id: $UID_"
+          login() { curl -s -o /tmp/l.out -w '%{http_code}' -X POST "$API_URL/users/login" -H "$H" -H "$A" -d "{\"email\":\"$EMAIL\",\"password\":\"$1\"}"; }
+          echo "correct pw before failures: $(login "$PW")"
+          for i in 1 2 3 4; do echo "wrong $i: $(login wrong-password) $(head -c 120 /tmp/l.out)"; done
+          echo "correct pw after lock: $(login "$PW") $(head -c 120 /tmp/l.out)"
+          sleep 90; echo "after 90s: $(login "$PW") $(head -c 120 /tmp/l.out)"
+          sleep 150; echo "after 240s: $(login "$PW") $(head -c 120 /tmp/l.out)"
+          ADMIN=$(curl -s -X POST "$API_URL/users/login" -H "$H" -H "$A" -d '{"email":"admin@practicesoftwaretesting.com","password":"welcome01"}' | python3 -c 'import sys,json; print(json.load(sys.stdin).get("access_token",""))')
+          echo "admin token length: ${#ADMIN}"
+          curl -s -w '\nadmin PATCH failed_login_attempts=0: %{http_code}\n' -X PATCH "$API_URL/users/$UID_" -H "$H" -H "$A" -H "Authorization: Bearer $ADMIN" -d '{"failed_login_attempts":0}' | tail -c 300
+          echo "after admin PATCH: $(login "$PW") $(head -c 120 /tmp/l.out)"
+          curl -s -w '\nadmin PUT enabled+attempts: %{http_code}\n' -X PUT "$API_URL/users/$UID_" -H "$H" -H "$A" -H "Authorization: Bearer $ADMIN" -d "{\"first_name\":\"Probe\",\"last_name\":\"User\",\"email\":\"$EMAIL\",\"failed_login_attempts\":0}" | tail -c 300
+          echo "after admin PUT: $(login "$PW") $(head -c 120 /tmp/l.out)"
+          echo "== rate limit =="
+          for i in $(seq 1 400); do curl -s -o /dev/null -D /tmp/h.out -w "get $i: %{http_code}\n" "$API_URL/brands"; grep -i -E '^(x-ratelimit|retry-after)' /tmp/h.out | tr -d '\r'; done | awk '{print} /get [0-9]+: 429/ {c++} END {print "brands seq 429 count: " c+0}' | grep -E '429|ratelimit|retry|count' | head -20
+          seq 1 300 | xargs -P 20 -I{} curl -s -o /dev/null -w '%{http_code}\n' "$API_URL/products" | sort | uniq -c | sed 's/^/products concurrent: /'
+          seq 1 100 | xargs -P 10 -I{} curl -s -o /dev/null -w '%{http_code}\n' "$BASE_URL/" | sort | uniq -c | sed 's/^/web concurrent: /'
+          echo "== checkout repeat =="
+          npx playwright test --project=setup --project=chromium-desktop tests/checkout/checkout.desktop.spec.ts --repeat-each=15 --reporter=line --trace=retain-on-failure || true
       - uses: actions/upload-artifact@v7
         if: always()
         with:
