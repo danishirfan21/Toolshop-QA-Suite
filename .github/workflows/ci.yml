@@ -56,8 +56,6 @@ jobs:
             sleep 5
           done
           exit 1
-      - name: Probe recon (temporary)
-        run: bash scripts/probe-recon.sh
       - name: Toolshop logs on failure
         if: failure()
         working-directory: toolshop

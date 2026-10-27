@@ -12,6 +12,26 @@ test.describe('auth', () => {
     expect(typeof body.access_token).toBe('string');
   });
 
+  test('login with a wrong password or an unknown email is 401 Unauthorized', async ({ request }) => {
+    const wrongPassword = await request.post('/users/login', {
+      data: { email: 'customer@practicesoftwaretesting.com', password: 'not-the-password' },
+    });
+    expect(wrongPassword.status()).toBe(401);
+    expect(await wrongPassword.json()).toEqual({ error: 'Unauthorized' });
+
+    const unknownEmail = await request.post('/users/login', {
+      data: { email: 'nobody@example.com', password: 'welcome01' },
+    });
+    expect(unknownEmail.status()).toBe(401);
+    expect(await unknownEmail.json()).toEqual({ error: 'Unauthorized' });
+  });
+
+  test('login with an empty body is 401 Invalid login request', async ({ request }) => {
+    const res = await request.post('/users/login', { data: {} });
+    expect(res.status()).toBe(401);
+    expect(await res.json()).toEqual({ error: 'Invalid login request' });
+  });
+
   test('GET /users/me without a token is 401', async ({ request }) => {
     const res = await request.get('/users/me');
     expect(res.status()).toBe(401);

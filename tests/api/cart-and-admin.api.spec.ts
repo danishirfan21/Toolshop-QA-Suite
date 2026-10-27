@@ -32,6 +32,33 @@ test.describe('cart', () => {
   });
 });
 
+test.describe('cart without a token', () => {
+  test('a cart can be created, filled, read and deleted with no token', async ({ request, customerApi }) => {
+    const created = await request.post('/carts');
+    expect(created.status()).toBe(201);
+    const cartId = (await created.json()).id as string;
+
+    const productId = await customerApi.firstProductId();
+    expect((await request.post(`/carts/${cartId}`, { data: { product_id: productId, quantity: 1 } })).status()).toBe(200);
+    expect((await request.get(`/carts/${cartId}`)).status()).toBe(200);
+    expect((await request.delete(`/carts/${cartId}`)).status()).toBe(204);
+  });
+
+  test('quantity 99 is accepted and 100 is not (JSON Accept header)', async ({ request, customerApi }) => {
+    const cartId = await customerApi.createCart();
+    const productId = await customerApi.firstProductId();
+    const headers = { Accept: 'application/json' };
+
+    const ok = await request.post(`/carts/${cartId}`, { data: { product_id: productId, quantity: 99 }, headers });
+    expect(ok.status()).toBe(200);
+
+    // Without the Accept header the self-hosted API answered 302 for 100; the JSON status is not recorded, so only assert it is a 4xx.
+    const over = await request.post(`/carts/${cartId}`, { data: { product_id: productId, quantity: 100 }, headers, maxRedirects: 0 });
+    expect(over.status()).toBeGreaterThanOrEqual(400);
+    expect(over.status()).toBeLessThan(500);
+  });
+});
+
 test.describe('admin product lifecycle', () => {
   const createdIds: string[] = [];
 

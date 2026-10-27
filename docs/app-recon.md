@@ -109,10 +109,10 @@ Observed 2026-10-27 in GitHub Actions run 40439729196 (ubuntu-latest): the brows
 2d. Checkout UI test flake: run 40502094783 (commit 2f9ce58, docs-only) failed on the first run and both retries with `expectCartHasItems(1)` receiving 0 `product-title` elements; the same test passed in run 40500276180. Cause UNKNOWN (failure screenshot and trace not inspected). Suspected race: `addProductToCart` navigated to `/checkout` right after the click. Commit e61fc1c now waits for the add-item response first; run 40502595593 passed (23 tests, one run only), so the fix is not proven.
 3. RESOLVED by observation: the city must match `GET /postcode-lookup` for the exact country string and postcode (see Checkout). Why the lookup returns a city unrelated to the real place is UNKNOWN.
 3a. Account lockout threshold on the public demo: customer@ is locked (423) as of 2026-10-27; what triggered it is UNKNOWN.
-4. Login failure response (wrong password) status and body, account lockout threshold (`failed_login_attempts` exists on the admin profile only).
-5. Cart and `POST /carts` behavior with no token.
+4. PARTLY RESOLVED: on the self-hosted API (run 40506401413, commit c8d65ca) `POST /users/login` with a wrong password and with an unknown email both returned 401 `{"error":"Unauthorized"}`; an empty body returned 401 `{"error":"Invalid login request"}`. UNKNOWN: the account lockout threshold (`failed_login_attempts` exists on the admin profile only); it was not probed.
+5. RESOLVED (one run, self-hosted, run 40506401413): with no token `POST /carts` returned 201 `{"id":...}`, `GET /carts/{id}` 200, `POST /carts/{id}` (qty 1) 200 and `DELETE /carts/{id}` 204.
 6. Whether the demo resets data on a schedule. Seeded `created_at` values showed today's date (2026-10-27) and invoices dated 2026-10-21, which hints at periodic reseeding but that is not confirmed.
-7. Rate limits and any maximum quantity per cart item.
+7. PARTLY RESOLVED (self-hosted, run 40506401413, no token, no `Accept` header): adding quantity 99 returned 200; quantities 100, 101, 1000, 999999 and -1 each returned 302 with an HTML body 'Redirecting to http://localhost:8091'. The cause is UNKNOWN; a Laravel validation redirect is suspected but not observed, because the probe sent no `Accept: application/json`. No rate limit was seen in the few requests sent; a rate limit was not tested.
 8. Admin UI behavior (only the API was probed).
 9. Mobile layout behavior.
 10. Upstream Docker image tags: only `testsmith/practice-software-testing-web` (arm64 platform warning) and sprint5 api/ui images were used in CI; exact digests not recorded.
