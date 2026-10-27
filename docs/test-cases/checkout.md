@@ -106,7 +106,7 @@ Environment labels: "CI-hosted" is the self-hosted Toolshop at the pinned TOOLSH
 | 3 | POST /invoices with no token | 401 |
 
 ## Notes and open questions
-- Accepted gift-card format is UNKNOWN (see TC-CHK-008).
+- Accepted gift-card format: see TC-CHK-008.
 
 # Test case: TC-CHK-005 Customer pays cash on delivery on desktop
 
@@ -169,8 +169,8 @@ Environment labels: "CI-hosted" is the self-hosted Toolshop at the pinned TOOLSH
 | Title | Credit card, bank transfer and buy-now-pay-later with empty details |
 | Priority | P2 |
 | Type | API |
-| Automation | Keep manual |
-| Reason for automation decision | Recon shows 500 "Something went wrong" on CI-hosted. A 422 looks more correct, so pinning 500 would hide a possible defect. Left for review. |
+| Automation | Automate |
+| Reason for automation decision | The test expects 422 and is marked test.fail while BUG-001 is open, so it does not pin the 500 and will flag the fix. |
 | Source (story or recon section) | CHK story; docs/app-recon.md Checkout |
 
 ## Preconditions
@@ -180,10 +180,10 @@ Environment labels: "CI-hosted" is the self-hosted Toolshop at the pinned TOOLSH
 ## Steps
 | # | Action | Expected result |
 | --- | --- | --- |
-| 1 | POST /invoices/guest with the method and {} details | UNKNOWN (observed 500 on CI-hosted; intended behavior not confirmed) |
+| 1 | POST /invoices with each method and {} details | 422 (observed 500 on demo and CI-hosted, see BUG-001) |
 
 ## Notes and open questions
-- Listed as a CANDIDATE DEFECT in the Stage 2A report.
+- BUG-001. The 422 expectation is a tester judgment; the test is test.fail until triaged.
 
 # Test case: TC-CHK-008 Gift card payment accepted format
 
@@ -193,21 +193,23 @@ Environment labels: "CI-hosted" is the self-hosted Toolshop at the pinned TOOLSH
 | Title | Gift card payment accepted format |
 | Priority | P3 |
 | Type | Functional |
-| Automation | Keep manual |
-| Reason for automation decision | The accepted gift card number and validation code format is UNKNOWN. |
+| Automation | Automate |
+| Reason for automation decision | Format answered by upstream docs/gift-card-validation.md at the pinned ref and probed on CI-hosted. |
 | Source (story or recon section) | CHK story; docs/app-recon.md UNKNOWN |
 
 ## Preconditions
-- UNKNOWN
+- A cart with one product.
 ## Test data
-- UNKNOWN. "ABC12345" gave 422.
+- Number: exactly 16 alphanumeric characters. Code: exactly 4. Valid 1234567890123456 / 1A2B; short number 123456789012345; short code 1A2.
 ## Steps
 | # | Action | Expected result |
 | --- | --- | --- |
-| 1 | Pay with a gift card | UNKNOWN |
+| 1 | POST /invoices with the valid number and code | 201 |
+| 2 | Repeat with the 15 character number | 422 on payment_details.gift_card_number |
+| 3 | Repeat with the 3 character code | 422 on payment_details.validation_code |
 
 ## Notes and open questions
-- Needs the validation rule from the user or the upstream source.
+- Rule taken from upstream docs/gift-card-validation.md.
 
 # Test case: TC-CHK-009 Guest checkout through the UI
 
@@ -217,21 +219,22 @@ Environment labels: "CI-hosted" is the self-hosted Toolshop at the pinned TOOLSH
 | Title | Guest checkout through the UI |
 | Priority | P1 |
 | Type | Functional |
-| Automation | Keep manual |
-| Reason for automation decision | The UI guest path (sign-in step, guest fields) was not probed, so locators and expectations are UNKNOWN. |
+| Automation | Automate |
+| Reason for automation decision | The guest UI path was walked on the demo and CI-hosted; locators and the confirmation text are known. |
 | Source (story or recon section) | CHK story; docs/app-recon.md UNKNOWN |
 
 ## Preconditions
 - Not logged in.
 ## Test data
-- UNKNOWN
+- Guest Guest Shopper, guest.qa@example.com. Address NL / 1122AB / 98, city and state from the lookup.
 ## Steps
 | # | Action | Expected result |
 | --- | --- | --- |
-| 1 | Add a product, open /checkout and continue as a guest | UNKNOWN |
+| 1 | Add a product, open /checkout, proceed, open the Continue as Guest tab and submit the guest fields | The address step opens |
+| 2 | Fill the address, pay cash on delivery | The confirmation shows an INV- number |
 
 ## Notes and open questions
-- Candidate for Stage 2B manual exploration.
+- Walked in Stage 2B (docs/exploratory-notes.md).
 
 **Assumptions**
 - Postcode NL / 1122AB resolves through /postcode-lookup (Checkout).

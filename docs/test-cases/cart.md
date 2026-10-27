@@ -63,7 +63,7 @@ Environment labels: "CI-hosted" is the self-hosted Toolshop at the pinned TOOLSH
 | Priority | P2 |
 | Type | API |
 | Automation | Automate |
-| Reason for automation decision | Rejection is stable; the exact status is not, so the test asserts a client error from a short list. |
+| Reason for automation decision | Rejection is stable. With the JSON Accept header the status is 422 (confirmed on CI-hosted). |
 | Source (story or recon section) | CART story; docs/app-recon.md Cart |
 
 ## Preconditions
@@ -73,11 +73,11 @@ Environment labels: "CI-hosted" is the self-hosted Toolshop at the pinned TOOLSH
 ## Steps
 | # | Action | Expected result |
 | --- | --- | --- |
-| 1 | Add the valid product with quantity 0 | 404 or 422 |
-| 2 | Add the unknown product | 404 or 422 |
+| 1 | Add the valid product with quantity 0, sending Accept: application/json | 422 mentioning quantity |
+| 2 | Add the unknown product, same header | 422 mentioning the product |
 
 ## Notes and open questions
-- Recon first saw 422 and later 404 {"message":"Resource not found"}. The cause is UNKNOWN, so only 404 or 422 is asserted.
+- Recon first saw 422 and later 404 {"message":"Resource not found"}. Cause found (docs/exploratory-notes.md): without Accept: application/json the API answers 302 to the API root, and a redirect-following client then sees 404. The test sends the header and does not follow redirects.
 
 # Test case: TC-CART-004 Cart works without a token
 

@@ -31,6 +31,8 @@ export class ProductsPage {
 
   // On a phone the search and sort controls sit in a collapsed Filters panel (observed on the public demo).
   async openFiltersIfCollapsed(): Promise<void> {
+    // isVisible() does not wait, so wait for either control first; it raced the page render (TC-CAT-004 flaked in CI).
+    await expect(this.searchInput.or(this.filtersToggle).first()).toBeVisible();
     if (!(await this.searchInput.isVisible())) await this.filtersToggle.click();
   }
 

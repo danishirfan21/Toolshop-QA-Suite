@@ -11,6 +11,7 @@ interface Fixtures {
   adminPage: Page;
   productsPage: ProductsPage;
   customerProductsPage: ProductsPage;
+  checkoutPage: CheckoutPage;
   customerCheckoutPage: CheckoutPage;
   customerApi: ApiClient;
   adminApi: ApiClient;
@@ -35,6 +36,8 @@ export const test = base.extend<Fixtures>({
   productsPage: async ({ page }, use) => use(new ProductsPage(page)),
 
   customerProductsPage: async ({ customerPage }, use) => use(new ProductsPage(customerPage)),
+
+  checkoutPage: async ({ page }, use) => use(new CheckoutPage(page)),
 
   customerCheckoutPage: async ({ customerPage }, use) => use(new CheckoutPage(customerPage)),
 

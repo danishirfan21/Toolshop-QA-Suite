@@ -15,6 +15,12 @@ export class CheckoutPage {
   readonly cartTotal: Locator;
   readonly proceedFromCart: Locator;
   readonly proceedFromSignIn: Locator;
+  readonly guestTab: Locator;
+  readonly guestEmail: Locator;
+  readonly guestFirstName: Locator;
+  readonly guestLastName: Locator;
+  readonly guestSubmit: Locator;
+  readonly proceedAsGuest: Locator;
   readonly country: Locator;
   readonly postalCode: Locator;
   readonly houseNumber: Locator;
@@ -34,6 +40,12 @@ export class CheckoutPage {
     this.cartTotal = page.getByTestId('cart-total');
     this.proceedFromCart = page.getByTestId('proceed-1');
     this.proceedFromSignIn = page.getByTestId('proceed-2');
+    this.guestTab = page.getByRole('tab', { name: 'Continue as Guest' });
+    this.guestEmail = page.getByTestId('guest-email');
+    this.guestFirstName = page.getByTestId('guest-first-name');
+    this.guestLastName = page.getByTestId('guest-last-name');
+    this.guestSubmit = page.getByTestId('guest-submit');
+    this.proceedAsGuest = page.getByTestId('proceed-2-guest');
     this.country = page.getByTestId('country');
     this.postalCode = page.getByTestId('postal_code');
     this.houseNumber = page.getByTestId('house_number');
@@ -80,6 +92,15 @@ export class CheckoutPage {
 
   async continueFromSignIn(): Promise<void> {
     await this.proceedFromSignIn.click();
+  }
+
+  async continueAsGuest(guest: { email: string; firstName: string; lastName: string }): Promise<void> {
+    await this.guestTab.click();
+    await this.guestEmail.fill(guest.email);
+    await this.guestFirstName.fill(guest.firstName);
+    await this.guestLastName.fill(guest.lastName);
+    await this.guestSubmit.click();
+    await this.proceedAsGuest.click();
   }
 
   async continueFromAddress(): Promise<void> {

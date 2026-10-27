@@ -21,7 +21,7 @@ Not covered: real-device layout (only emulation was used earlier, and no judgmen
 | TC-CART-004 anonymous cart | Works, by design or not is unclear. | POST /carts with no token: 201. Adding with no token: 200. Adding to the same cart with a customer token: 200 (a cart is not bound to a user). GET of an unknown cart id: 404 `{"message":"Requested item not found"}`. Cart ids are ULIDs. |
 | TC-CART-005 quantity edits in UI | Works, with one visual inconsistency (BUG-003). | The input is `product-quantity` with min 1, max 99. 3 gave line and total $42.45 (product $14.15). 99 gave $1,400.85. 100 snapped back to 99. 0 and -1 snapped back to 1. 2.5 gave a PUT /carts/{id} 422 and an alert "The quantity field must be an integer.", but the line showed $35.38 while the total stayed $14.15. A reload showed quantity 1. |
 | TC-CAT-007 filters, pagination, default price range | Observed. | The filter panel has Sort (6 options), a Price Range slider (scale 0 to 200, default selection 1 to 100), Search, and 47 checkboxes (categories). Page 2 shows 9 cards. A category checkbox changed the card list. Details below. |
-| 404 vs 422 for quantity 0 and unknown product (TC-CART-003) | Explained. | With `Accept: application/json`: quantity 0 gave 422 "The quantity field must be at least 1." and an unknown product gave 422 "The selected product id is invalid." Without that header the API answered 302 to the API root. A client that follows redirects ends with a different status, which matches the 404 seen earlier. The test asserts `[404, 422]`, and it could be tightened by sending the header. |
+| 404 vs 422 for quantity 0 and unknown product (TC-CART-003) | Explained. | With `Accept: application/json`: quantity 0 gave 422 "The quantity field must be at least 1." and an unknown product gave 422 "The selected product id is invalid." Without that header the API answered 302 to the API root. A client that follows redirects ends with a different status, which matches the 404 seen earlier. Confirmed on CI-hosted. TC-CART-003 now sends the header and asserts 422. |
 
 ## Catalog: the default price range hides products
 
@@ -30,5 +30,6 @@ The UI's Price Range slider defaults to 1 to 100 (scale 0 to 200). The unfiltere
 ## Notes for follow-up
 
 - TC-CHK-008 (gift card) and TC-CHK-009 (guest UI checkout) now have enough information to be automated.
-- BUG-001 was also seen on CI-hosted in recon. BUG-002 and BUG-003 are demo-only until a CI-hosted probe confirms them.
+- A CI-hosted probe (Stage 2C) confirmed: BUG-001 (500 on empty details), BUG-002 at the API level only (logged-in UI cart was empty after the order, unlike the demo guest flow), BUG-003 in the UI, the gift-card format, and the Accept-header explanation for 404 versus 422.
+- TC-CHK-007, 008, 009 are now automated, and TC-CART-003 asserts 422 with the header. TC-CHK-007 is test.fail while BUG-001 is open.
 - Mobile layout: still not judged.

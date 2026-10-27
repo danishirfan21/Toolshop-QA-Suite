@@ -28,16 +28,18 @@ test.describe('cart', () => {
     expect(JSON.stringify(await over.json())).toContain('quantity');
   });
 
-  test('TC-CART-003 quantity 0 and an unknown product are rejected @regression', async ({ customerApi }) => {
+  test('TC-CART-003 quantity 0 and an unknown product are rejected with 422 (JSON Accept header) @regression', async ({ request, customerApi }) => {
     const cartId = await customerApi.createCart();
     const productId = await customerApi.firstProductId();
+    // Without Accept: application/json the API answers 302, and a redirect-following client then sees 404 (confirmed on CI-hosted).
+    const headers = { Accept: 'application/json' };
 
-    // Recon recorded 422 first and 404 {"message":"Resource not found"} later; the cause is UNKNOWN,
-    // so assert only that both are rejected as client errors.
-    const zero = await customerApi.call('post', `/carts/${cartId}`, { product_id: productId, quantity: 0 });
-    expect([404, 422]).toContain(zero.status());
+    const zero = await request.post(`/carts/${cartId}`, { data: { product_id: productId, quantity: 0 }, headers, maxRedirects: 0 });
+    expect(zero.status()).toBe(422);
+    expect(JSON.stringify(await zero.json())).toContain('quantity');
 
-    const unknown = await customerApi.call('post', `/carts/${cartId}`, { product_id: 'does-not-exist', quantity: 1 });
-    expect([404, 422]).toContain(unknown.status());
+    const unknown = await request.post(`/carts/${cartId}`, { data: { product_id: 'does-not-exist', quantity: 1 }, headers, maxRedirects: 0 });
+    expect(unknown.status()).toBe(422);
+    expect(JSON.stringify(await unknown.json())).toContain('product');
   });
 });
