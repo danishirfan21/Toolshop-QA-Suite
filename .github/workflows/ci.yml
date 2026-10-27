@@ -10,7 +10,7 @@ env:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     env:
       # Self-hosted Toolshop (see the start step). The public demo is not used from CI because Cloudflare challenges runner IPs.
@@ -63,6 +63,24 @@ jobs:
 
       - run: npx playwright install --with-deps chromium
       - run: npm test
+      - name: TEMP probe (lockout, rate limit, quantity 100)
+        if: always()
+        run: |
+          # Bounded: 12 logins with a wrong password on the seeded customer, 80 GETs, 1 cart. Throwaway CI database.
+          for i in $(seq 1 12); do
+            code=$(curl -s -o /tmp/login.out -w '%{http_code}' -X POST "$API_URL/users/login" -H 'Accept: application/json' -H 'Content-Type: application/json' -d '{"email":"customer@practicesoftwaretesting.com","password":"wrong-password"}')
+            echo "login attempt $i: $code $(head -c 200 /tmp/login.out)"
+          done
+          code=$(curl -s -o /tmp/login.out -w '%{http_code}' -X POST "$API_URL/users/login" -H 'Accept: application/json' -H 'Content-Type: application/json' -d '{"email":"customer@practicesoftwaretesting.com","password":"welcome01"}')
+          echo "login with the right password after failures: $code $(head -c 200 /tmp/login.out)"
+          for i in $(seq 1 80); do
+            curl -s -o /dev/null -D /tmp/h.out -w "get $i: %{http_code}\n" "$API_URL/brands"
+            grep -i -E '^(x-ratelimit|retry-after)' /tmp/h.out | tr -d '\r' | tr '\n' ' ' | sed 's/^/  /;s/$/\n/' | grep -v '^\s*$' || true
+          done | awk '{print} /get [0-9]+: 429/ {c++} END {print "429 count: " c+0}'
+          cart=$(curl -s -X POST "$API_URL/carts" -H 'Accept: application/json' | jq -r .id)
+          pid=$(curl -s "$API_URL/products" -H 'Accept: application/json' | jq -r '.data[0].id')
+          code=$(curl -s -o /tmp/q.out -w '%{http_code}' -X POST "$API_URL/carts/$cart" -H 'Accept: application/json' -H 'Content-Type: application/json' -d "{\"product_id\":\"$pid\",\"quantity\":100}")
+          echo "quantity 100 with JSON Accept: $code $(head -c 300 /tmp/q.out)"
       - uses: actions/upload-artifact@v7
         if: always()
         with:
