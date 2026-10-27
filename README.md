@@ -28,7 +28,7 @@ npm test
 
 `npm run test:desktop` and `npm run test:mobile` run one project each.
 
-CI runs lint, typecheck and `npm run test:api` only. On the first CI run (2026-10-27) the GitHub runner's browser was shown a Cloudflare "Performing security verification" page instead of the app, so the UI projects cannot log in from there. Running them in CI needs a self-hosted copy of the app. Optional settings are listed in `.env.example`; defaults point at the public demo and its documented seeded accounts.
+CI (run 40491927719, 17 tests passed) clones the upstream Toolshop at the commit pinned in `docs/app-recon.md`, starts it with its `docker-compose.prod.yml` (the arm64-only web image runs under QEMU emulation), seeds the database, and runs all projects (setup, api, chromium-desktop, mobile-chrome) against `http://localhost:4200` and `http://localhost:8091` through `BASE_URL` and `API_URL`. The public demo is not used from CI because Cloudflare serves a bot challenge to runner IPs. Optional settings are listed in `.env.example`; defaults point at the public demo and its documented seeded accounts.
 
 ## Conventions
 

@@ -12,7 +12,7 @@ Every statement below was observed by calling the live public demo with Node `fe
 | API base | https://api.practicesoftwaretesting.com |
 | Swagger JSON | https://api.practicesoftwaretesting.com/docs?api-docs.json (the path `/docs/api-docs.json` returned 404) |
 | How it is run now | Public demo. Docker is not installed on this machine (`docker` is not recognized), so nothing was self-hosted. |
-| CI | Will self-host the upstream Docker setup later. Not done in Stage 1. |
+| CI | Self-hosts the upstream `docker-compose.prod.yml` (laravel-api, angular-ui, web, mariadb) at the pinned commit. Observed 2026-10-27 in run 40491927719: 17 tests passed (setup, api, chromium-desktop, mobile-chrome). Web image is linux/arm64 only; run 40490758359 failed with `exec format error` on amd64, run 40491927719 passed after adding QEMU arm64 emulation. |
 
 ## Seeded accounts
 
@@ -106,5 +106,5 @@ Observed 2026-10-27 in GitHub Actions run 40439729196 (ubuntu-latest): the brows
 7. Rate limits and any maximum quantity per cart item.
 8. Admin UI behavior (only the API was probed).
 9. Mobile layout behavior.
-10. Upstream Docker image tags (not pulled, Docker is unavailable here).
-11. Whether the Cloudflare challenge on the runner is consistent across runs or IPs (one run observed).
+10. Upstream Docker image tags: only `testsmith/practice-software-testing-web` (arm64 platform warning) and sprint5 api/ui images were used in CI; exact digests not recorded.
+11. Whether the Cloudflare challenge on the runner is consistent across runs or IPs (one run observed). No longer affects CI, which uses the self-hosted app.
