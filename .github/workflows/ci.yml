@@ -5,12 +5,24 @@ on:
     branches: [main]
   pull_request:
 
+env:
+  TOOLSHOP_REF: ae7caecb811dd8952c09d997e69be7cb946ecd44
+
 jobs:
   test:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 30
+    env:
+      # Self-hosted Toolshop (see the start step). The public demo is not used from CI because Cloudflare challenges runner IPs.
+      BASE_URL: http://localhost:4200
+      API_URL: http://localhost:8091
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: testsmith-io/practice-software-testing
+          ref: ${{ env.TOOLSHOP_REF }}
+          path: toolshop
       - uses: actions/setup-node@v4
         with:
           node-version: 20
@@ -18,8 +30,35 @@ jobs:
       - run: npm ci
       - run: npm run lint
       - run: npm run typecheck
-      # UI projects are not run here: Cloudflare serves GitHub runner IPs a bot challenge instead of the app (see docs/app-recon.md).
-      - run: npm run test:api
+
+      - name: Start Toolshop (upstream prod compose)
+        working-directory: toolshop
+        run: docker compose -f docker-compose.prod.yml up -d laravel-api angular-ui web mariadb
+      - name: Migrate and seed database
+        working-directory: toolshop
+        run: |
+          for i in $(seq 1 30); do
+            if docker compose -f docker-compose.prod.yml exec -T laravel-api php artisan migrate:fresh --seed --force; then exit 0; fi
+            echo "migrate attempt $i failed, retrying"; sleep 5
+          done
+          exit 1
+      - name: Wait for API and web
+        run: |
+          for i in $(seq 1 60); do
+            api=$(curl -s -o /dev/null -w '%{http_code}' "$API_URL/brands" || true)
+            web=$(curl -s -o /dev/null -w '%{http_code}' "$BASE_URL/" || true)
+            echo "api=$api web=$web"
+            if [ "$api" = 200 ] && [ "$web" = 200 ]; then exit 0; fi
+            sleep 5
+          done
+          exit 1
+      - name: Toolshop logs on failure
+        if: failure()
+        working-directory: toolshop
+        run: docker compose -f docker-compose.prod.yml logs --tail=100
+
+      - run: npx playwright install --with-deps chromium
+      - run: npm test
       - uses: actions/upload-artifact@v4
         if: always()
         with:
