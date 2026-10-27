@@ -52,10 +52,10 @@ test.describe('cart without a token', () => {
     const ok = await request.post(`/carts/${cartId}`, { data: { product_id: productId, quantity: 99 }, headers });
     expect(ok.status()).toBe(200);
 
-    // Without the Accept header the self-hosted API answered 302 for 100; the JSON status is not recorded, so only assert it is a 4xx.
+    // Without the Accept header the self-hosted API answered 302 for 100; with it, 422 (docs/app-recon.md item 7).
     const over = await request.post(`/carts/${cartId}`, { data: { product_id: productId, quantity: 100 }, headers, maxRedirects: 0 });
-    expect(over.status()).toBeGreaterThanOrEqual(400);
-    expect(over.status()).toBeLessThan(500);
+    expect(over.status()).toBe(422);
+    expect(JSON.stringify(await over.json())).toContain('quantity');
   });
 });
 
