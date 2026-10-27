@@ -6,7 +6,7 @@ import playwright from 'eslint-plugin-playwright';
 const rawLocatorCalls = ['locator', 'getByRole', 'getByText', 'getByTestId', 'getByLabel', 'getByPlaceholder', 'getByAltText', 'getByTitle'];
 
 export default tseslint.config(
-  { ignores: ['node_modules/', 'playwright-report/', 'test-results/', '.auth/'] },
+  { ignores: ['toolshop/', 'node_modules/', 'playwright-report/', 'test-results/', '.auth/'] },
   js.configs.recommended,
   ...tseslint.configs.recommended,
   { languageOptions: { globals: { ...globals.node } } },
