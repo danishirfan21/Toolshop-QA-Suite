@@ -17,13 +17,13 @@ jobs:
       BASE_URL: http://localhost:4200
       API_URL: http://localhost:8091
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
+      - uses: actions/checkout@v7
         with:
           repository: testsmith-io/practice-software-testing
           ref: ${{ env.TOOLSHOP_REF }}
           path: toolshop
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 20
           cache: npm
@@ -32,7 +32,7 @@ jobs:
       - run: npm run typecheck
 
       # The upstream web image is linux/arm64 only (run 40490758359: exec format error on amd64), so emulate it.
-      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-qemu-action@v4
         with:
           platforms: arm64
       - name: Start Toolshop (upstream prod compose)
@@ -63,7 +63,7 @@ jobs:
 
       - run: npx playwright install --with-deps chromium
       - run: npm test
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: playwright-report
