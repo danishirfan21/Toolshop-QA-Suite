@@ -1,0 +1,45 @@
+import { test, expect } from '../../fixtures';
+
+// TEMPORARY probe, never merged. Fails on purpose so the observations appear in the CI log.
+test('PROBE-UI observations', async ({ customerPage, customerApi }) => {
+  const obs: Record<string, unknown> = {};
+  const productId = await customerApi.firstProductId();
+  const t = (id: string) => customerPage.getByTestId(id);
+  await customerPage.goto(`/product/${productId}`);
+  const added = customerPage.waitForResponse((r) => /\/carts\/[^/]+$/.test(new URL(r.url()).pathname) && r.request().method() === 'POST');
+  await t('add-to-cart').click();
+  await added;
+  await customerPage.goto('/checkout');
+  await t('product-title').first().waitFor();
+  const q = t('product-quantity').first();
+  await q.fill('2.5');
+  await q.blur();
+  await customerPage.waitForTimeout(2000);
+  obs.frac = { qty: await q.inputValue(), line: await t('line-price').first().textContent(), total: await t('cart-total').textContent(), alerts: await customerPage.locator('.alert').allInnerTexts() };
+  await q.fill('100');
+  await q.blur();
+  await customerPage.waitForTimeout(1500);
+  obs.qty100 = await q.inputValue();
+  await q.fill('1');
+  await q.blur();
+  await customerPage.waitForTimeout(1000);
+  await t('proceed-1').click();
+  await t('proceed-2').click();
+  await t('country').selectOption('NL');
+  await t('postal_code').fill('1122AB');
+  await t('house_number').fill('98');
+  await customerPage.waitForTimeout(2500);
+  obs.autofill = [await t('street').inputValue(), await t('city').inputValue(), await t('state').inputValue()];
+  await t('proceed-3').click();
+  await t('payment-method').selectOption('cash-on-delivery');
+  await t('finish').click();
+  await t('payment-success-message').waitFor();
+  await t('finish').click();
+  await customerPage.locator('#order-confirmation').waitFor();
+  obs.confirmation = await customerPage.locator('#order-confirmation').innerText();
+  obs.badgeAfter = await t('cart-quantity').textContent();
+  await customerPage.goto('/checkout');
+  await customerPage.waitForTimeout(2000);
+  obs.rowsAfter = await t('product-title').count();
+  expect(JSON.stringify(obs, null, 1)).toBe('PROBE');
+});
