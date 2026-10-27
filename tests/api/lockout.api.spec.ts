@@ -27,7 +27,7 @@ test.describe('login lockout', () => {
     expect(await login(password)).toBe(200);
     expect([await login('wrong-1'), await login('wrong-2'), await login('wrong-3')]).toEqual([401, 401, 401]);
     expect(await login('wrong-4')).toBe(423);
-    // Locked even with the right password (no expiry was observed within 240 s, docs/app-recon.md item 3a).
+    // Locked even with the right password (no expiry was observed within 7200 s, docs/app-recon.md item 3a).
     expect(await login(password)).toBe(423);
 
     const unlock = await adminApi.call('patch', `/users/${userId}`, { failed_login_attempts: 0 });
