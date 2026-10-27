@@ -18,8 +18,8 @@ jobs:
       - run: npm ci
       - run: npm run lint
       - run: npm run typecheck
-      - run: npx playwright install --with-deps chromium
-      - run: npm test
+      # UI projects are not run here: Cloudflare serves GitHub runner IPs a bot challenge instead of the app (see docs/app-recon.md).
+      - run: npm run test:api
       - uses: actions/upload-artifact@v4
         if: always()
         with:

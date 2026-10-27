@@ -26,7 +26,9 @@ npm run typecheck
 npm test
 ```
 
-`npm run test:desktop` and `npm run test:mobile` run one project each. Optional settings are listed in `.env.example`; defaults point at the public demo and its documented seeded accounts.
+`npm run test:desktop` and `npm run test:mobile` run one project each.
+
+CI runs lint, typecheck and `npm run test:api` only. On the first CI run (2026-10-27) the GitHub runner's browser was shown a Cloudflare "Performing security verification" page instead of the app, so the UI projects cannot log in from there. Running them in CI needs a self-hosted copy of the app. Optional settings are listed in `.env.example`; defaults point at the public demo and its documented seeded accounts.
 
 ## Conventions
 

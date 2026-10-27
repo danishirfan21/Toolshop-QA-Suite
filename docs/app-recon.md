@@ -91,6 +91,10 @@ All probe products were deleted afterwards.
 - `localStorage`: `language`, `PAYMENT_ENDPOINT`, `GEO_LOCATION`, `RETRIEVE_GEOLOCATION`, `testing-split-screen-active`, `bug-hunting-split-screen-active`
 - The HTTP interceptor calls `token.getToken()`. After a UI login as customer, the saved Playwright storageState (observed 2026-10-27) held the JWT in `localStorage` under the key `auth-token` on https://practicesoftwaretesting.com, plus one cookie named `cf_clearance`.
 
+## CI observation
+
+Observed 2026-10-27 in GitHub Actions run 40439729196 (ubuntu-latest): the browser opened https://practicesoftwaretesting.com/auth/login and the failure screenshot and page snapshot show a Cloudflare "Performing security verification" page ("Verify you are human"), Ray ID a50e5780fd5caf8c. The login form never rendered, so both auth setup tests timed out. The API host was reachable from the same runner (13 API tests passed). Locally the same UI flow works.
+
 ## UNKNOWN
 
 1. RESOLVED: the UI stores the JWT in localStorage key `auth-token` (see Front end storage). Whether it is also stored elsewhere is not checked.
@@ -103,3 +107,4 @@ All probe products were deleted afterwards.
 8. Admin UI behavior (only the API was probed).
 9. Mobile layout behavior.
 10. Upstream Docker image tags (not pulled, Docker is unavailable here).
+11. Whether the Cloudflare challenge on the runner is consistent across runs or IPs (one run observed).
