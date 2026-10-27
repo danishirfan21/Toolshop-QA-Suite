@@ -9,15 +9,15 @@ async function lookup(request: APIRequestContext) {
   return (await res.json()) as { city: string; state: string };
 }
 
-function invoiceBody(cartId: string, place: { city: string; state: string }) {
+function invoiceBody(cartId: string, place: { city: string; state: string }, payment: { method: string; details: object } = { method: 'cash-on-delivery', details: {} }) {
   return {
     billing_street: 'Test street 98',
     billing_city: place.city,
     billing_state: place.state,
     billing_country: address.country,
     billing_postal_code: address.postcode,
-    payment_method: 'cash-on-delivery',
-    payment_details: {},
+    payment_method: payment.method,
+    payment_details: payment.details,
     cart_id: cartId,
   };
 }
@@ -68,6 +68,45 @@ test.describe('checkout', () => {
     expect(res.status()).toBe(422);
     // The self-hosted 422 body has no `errors` key, so compare the raw body; a failure prints it.
     expect(JSON.stringify(await res.json())).toContain('billing_country');
+  });
+
+  const accepted = [
+    { method: 'credit-card', details: { credit_card_number: '4111-1111-1111-1111', expiration_date: '12/2030', cvv: '123', card_holder_name: 'Jane Doe' } },
+    { method: 'bank-transfer', details: { bank_name: 'Test Bank', account_name: 'Jane Doe', account_number: '12345678' } },
+    { method: 'buy-now-pay-later', details: { monthly_installments: '6' } },
+  ];
+  for (const payment of accepted) {
+    test(`${payment.method} invoice with its payment details is created (201)`, async ({ customerApi, request }) => {
+      const place = await lookup(request);
+      const cartId = await customerApi.createCart();
+      await customerApi.addToCart(cartId, await customerApi.firstProductId(), 1);
+
+      const res = await customerApi.call('post', '/invoices', invoiceBody(cartId, place, payment));
+      expect(res.status()).toBe(201);
+      expect((await res.json()).invoice_number).toMatch(/^INV-\d+$/);
+    });
+  }
+
+  test('an unknown payment method is rejected with 422 naming payment_method', async ({ customerApi, request }) => {
+    const place = await lookup(request);
+    const cartId = await customerApi.createCart();
+    await customerApi.addToCart(cartId, await customerApi.firstProductId(), 1);
+
+    const res = await customerApi.call('post', '/invoices', invoiceBody(cartId, place, { method: 'bogus-method', details: {} }));
+    expect(res.status()).toBe(422);
+    expect(JSON.stringify(await res.json())).toContain('payment_method');
+  });
+
+  test('gift-card without details is rejected with 422 naming both fields', async ({ customerApi, request }) => {
+    const place = await lookup(request);
+    const cartId = await customerApi.createCart();
+    await customerApi.addToCart(cartId, await customerApi.firstProductId(), 1);
+
+    const res = await customerApi.call('post', '/invoices', invoiceBody(cartId, place, { method: 'gift-card', details: {} }));
+    expect(res.status()).toBe(422);
+    const body = JSON.stringify(await res.json());
+    expect(body).toContain('payment_details.gift_card_number');
+    expect(body).toContain('payment_details.validation_code');
   });
 
   test('creating an invoice without a token is 401', async ({ request }) => {

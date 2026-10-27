@@ -61,8 +61,6 @@ jobs:
         working-directory: toolshop
         run: docker compose -f docker-compose.prod.yml logs --tail=100
 
-      - name: Probe payment methods (temporary)
-        run: bash scripts/probe-payments.sh
       - run: npx playwright install --with-deps chromium
       - run: npm test
       - uses: actions/upload-artifact@v7
