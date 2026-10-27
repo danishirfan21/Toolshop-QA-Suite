@@ -1,5 +1,6 @@
 import { test as base, type Page } from '@playwright/test';
 import { ApiClient } from '../clients/api-client';
+import { CheckoutPage } from '../pages/checkout.page';
 import { LoginPage } from '../pages/login.page';
 import { ProductsPage } from '../pages/products.page';
 import { authFile } from '../utils/env';
@@ -9,6 +10,7 @@ interface Fixtures {
   customerPage: Page;
   adminPage: Page;
   customerProductsPage: ProductsPage;
+  customerCheckoutPage: CheckoutPage;
   customerApi: ApiClient;
   adminApi: ApiClient;
 }
@@ -29,6 +31,8 @@ export const test = base.extend<Fixtures>({
   },
 
   customerProductsPage: async ({ customerPage }, use) => use(new ProductsPage(customerPage)),
+
+  customerCheckoutPage: async ({ customerPage }, use) => use(new CheckoutPage(customerPage)),
 
   customerApi: async ({}, use) => {
     const api = new ApiClient('customer');
