@@ -30,6 +30,7 @@ jobs:
       - run: npm ci
       - run: npm run lint
       - run: npm run typecheck
+      - run: npm run traceability
 
       # The upstream web image is linux/arm64 only (run 40490758359: exec format error on amd64), so emulate it.
       - uses: docker/setup-qemu-action@v4

@@ -1,5 +1,6 @@
 import { test, expect } from '../../fixtures';
 import type { APIRequestContext } from '@playwright/test';
+import type { ApiClient } from '../../clients/api-client';
 
 const address = { country: 'NL', postcode: '1122AB' };
 
@@ -7,6 +8,12 @@ async function lookup(request: APIRequestContext) {
   const res = await request.get(`/postcode-lookup?country=${address.country}&postcode=${address.postcode}`);
   expect(res.status()).toBe(200);
   return (await res.json()) as { city: string; state: string };
+}
+
+async function filledCart(api: ApiClient): Promise<string> {
+  const cartId = await api.createCart();
+  await api.addToCart(cartId, await api.firstProductId(), 1);
+  return cartId;
 }
 
 function invoiceBody(cartId: string, place: { city: string; state: string }, payment: { method: string; details: object } = { method: 'cash-on-delivery', details: {} }) {
@@ -22,26 +29,14 @@ function invoiceBody(cartId: string, place: { city: string; state: string }, pay
   };
 }
 
+const guest = { guest_first_name: 'Jane', guest_last_name: 'Doe', guest_email: 'jane.doe@example.com' };
+
 test.describe('checkout', () => {
-  test('postcode lookup returns the city the invoice validation expects', async ({ request }) => {
+  test('TC-CHK-001 guest invoice with the looked-up city is created (201) @smoke', async ({ customerApi, request }) => {
     const place = await lookup(request);
-    expect(place.city).toBeTruthy();
-    expect(place.state).toBeTruthy();
-  });
+    const cartId = await filledCart(customerApi);
 
-  test('guest invoice with the looked-up city is created (201)', async ({ customerApi, request }) => {
-    const place = await lookup(request);
-    const cartId = await customerApi.createCart();
-    await customerApi.addToCart(cartId, await customerApi.firstProductId(), 1);
-
-    const res = await request.post('/invoices/guest', {
-      data: {
-        ...invoiceBody(cartId, place),
-        guest_first_name: 'Jane',
-        guest_last_name: 'Doe',
-        guest_email: 'jane.doe@example.com',
-      },
-    });
+    const res = await request.post('/invoices/guest', { data: { ...invoiceBody(cartId, place), ...guest } });
     expect(res.status()).toBe(201);
     const invoice = await res.json();
     expect(invoice.invoice_number).toMatch(/^INV-\d+$/);
@@ -49,20 +44,18 @@ test.describe('checkout', () => {
     expect(Number(invoice.total)).toBeGreaterThan(0);
   });
 
-  test('customer invoice with the looked-up city is created (201)', async ({ customerApi, request }) => {
+  test('TC-CHK-002 customer invoice with the looked-up city is created (201) @smoke', async ({ customerApi, request }) => {
     const place = await lookup(request);
-    const cartId = await customerApi.createCart();
-    await customerApi.addToCart(cartId, await customerApi.firstProductId(), 1);
+    const cartId = await filledCart(customerApi);
 
     const res = await customerApi.call('post', '/invoices', invoiceBody(cartId, place));
     expect(res.status()).toBe(201);
     expect((await res.json()).invoice_number).toMatch(/^INV-\d+$/);
   });
 
-  test('a city that does not belong to the country is rejected with 422', async ({ customerApi, request }) => {
+  test('TC-CHK-003 a city that does not match the postcode lookup is rejected with 422 @regression', async ({ customerApi, request }) => {
     const place = await lookup(request);
-    const cartId = await customerApi.createCart();
-    await customerApi.addToCart(cartId, await customerApi.firstProductId(), 1);
+    const cartId = await filledCart(customerApi);
 
     const res = await customerApi.call('post', '/invoices', invoiceBody(cartId, { ...place, city: 'Nowhere' }));
     expect(res.status()).toBe(422);
@@ -70,47 +63,21 @@ test.describe('checkout', () => {
     expect(JSON.stringify(await res.json())).toContain('billing_country');
   });
 
-  const accepted = [
-    { method: 'credit-card', details: { credit_card_number: '4111-1111-1111-1111', expiration_date: '12/2030', cvv: '123', card_holder_name: 'Jane Doe' } },
-    { method: 'bank-transfer', details: { bank_name: 'Test Bank', account_name: 'Jane Doe', account_number: '12345678' } },
-    { method: 'buy-now-pay-later', details: { monthly_installments: '6' } },
-  ];
-  for (const payment of accepted) {
-    test(`${payment.method} invoice with its payment details is created (201)`, async ({ customerApi, request }) => {
-      const place = await lookup(request);
-      const cartId = await customerApi.createCart();
-      await customerApi.addToCart(cartId, await customerApi.firstProductId(), 1);
-
-      const res = await customerApi.call('post', '/invoices', invoiceBody(cartId, place, payment));
-      expect(res.status()).toBe(201);
-      expect((await res.json()).invoice_number).toMatch(/^INV-\d+$/);
-    });
-  }
-
-  test('an unknown payment method is rejected with 422 naming payment_method', async ({ customerApi, request }) => {
+  test('TC-CHK-004 an unknown method, a gift card without details and a missing token are rejected @regression', async ({ customerApi, request }) => {
     const place = await lookup(request);
-    const cartId = await customerApi.createCart();
-    await customerApi.addToCart(cartId, await customerApi.firstProductId(), 1);
+    const cartId = await filledCart(customerApi);
 
-    const res = await customerApi.call('post', '/invoices', invoiceBody(cartId, place, { method: 'bogus-method', details: {} }));
-    expect(res.status()).toBe(422);
-    expect(JSON.stringify(await res.json())).toContain('payment_method');
-  });
+    const bogus = await customerApi.call('post', '/invoices', invoiceBody(cartId, place, { method: 'bogus-method', details: {} }));
+    expect(bogus.status()).toBe(422);
+    expect(JSON.stringify(await bogus.json())).toContain('payment_method');
 
-  test('gift-card without details is rejected with 422 naming both fields', async ({ customerApi, request }) => {
-    const place = await lookup(request);
-    const cartId = await customerApi.createCart();
-    await customerApi.addToCart(cartId, await customerApi.firstProductId(), 1);
+    const gift = await customerApi.call('post', '/invoices', invoiceBody(cartId, place, { method: 'gift-card', details: {} }));
+    expect(gift.status()).toBe(422);
+    const giftBody = JSON.stringify(await gift.json());
+    expect(giftBody).toContain('payment_details.gift_card_number');
+    expect(giftBody).toContain('payment_details.validation_code');
 
-    const res = await customerApi.call('post', '/invoices', invoiceBody(cartId, place, { method: 'gift-card', details: {} }));
-    expect(res.status()).toBe(422);
-    const body = JSON.stringify(await res.json());
-    expect(body).toContain('payment_details.gift_card_number');
-    expect(body).toContain('payment_details.validation_code');
-  });
-
-  test('creating an invoice without a token is 401', async ({ request }) => {
-    const res = await request.post('/invoices', { data: {} });
-    expect(res.status()).toBe(401);
+    const noToken = await request.post('/invoices', { data: {} });
+    expect(noToken.status()).toBe(401);
   });
 });

@@ -9,7 +9,8 @@
     "test": "playwright test",
     "test:desktop": "playwright test --project=chromium-desktop",
     "test:mobile": "playwright test --project=mobile-chrome",
-    "test:api": "playwright test --project=api"
+    "test:api": "playwright test --project=api",
+    "traceability": "tsx scripts/traceability.ts"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
@@ -19,6 +20,7 @@
     "eslint": "10.13.0",
     "eslint-plugin-playwright": "2.12.1",
     "globals": "17.13.0",
+    "tsx": "4.23.15",
     "typescript": "5.9.3",
     "typescript-eslint": "8.72.1"
   }
