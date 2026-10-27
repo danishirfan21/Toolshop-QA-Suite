@@ -2,6 +2,7 @@ import { test, expect } from '../../fixtures';
 
 // TEMPORARY probe, never merged. Fails on purpose so the observations appear in the CI log.
 test('PROBE-UI observations', async ({ customerPage, customerApi }) => {
+  test.setTimeout(120_000);
   const obs: Record<string, unknown> = {};
   const productId = await customerApi.firstProductId();
   const t = (id: string) => customerPage.getByTestId(id);
@@ -37,7 +38,7 @@ test('PROBE-UI observations', async ({ customerPage, customerApi }) => {
   await t('finish').click();
   await customerPage.locator('#order-confirmation').waitFor();
   obs.confirmation = await customerPage.locator('#order-confirmation').innerText();
-  obs.badgeAfter = await t('cart-quantity').textContent();
+  obs.badgeAfter = await t('cart-quantity').textContent({ timeout: 3000 }).catch(() => 'none');
   await customerPage.goto('/checkout');
   await customerPage.waitForTimeout(2000);
   obs.rowsAfter = await t('product-title').count();
