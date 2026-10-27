@@ -105,7 +105,7 @@ Observed 2026-10-27 in GitHub Actions run 40439729196 (ubuntu-latest): the brows
 2. PARTLY RESOLVED: guest and authenticated invoice payloads observed (201, see Checkout). What happens to the cart afterwards, and payment_details shapes for credit-card, gift-card, bank-transfer, buy-now-pay-later are not observed (only cash-on-delivery with `{}`).
 2a. Whether the postcode lookup auto-fills city/state in the UI is not observed; the test fills them explicitly.
 2b. The full text of `#order-confirmation` is not observed; the test only asserts it contains `INV-`.
-2c. Mobile checkout is not tested.
+2c. RESOLVED (one run): `tests/checkout/checkout.mobile.spec.ts` (Pixel 7 viewport, width asserted < 768) passed in run 40504965949 (24 tests). The `customerPage` fixture previously ignored the project's device settings, so the existing mobile smoke test ran at desktop size; it now passes the settings on and still passed.
 2d. Checkout UI test flake: run 40502094783 (commit 2f9ce58, docs-only) failed on the first run and both retries with `expectCartHasItems(1)` receiving 0 `product-title` elements; the same test passed in run 40500276180. Cause UNKNOWN (failure screenshot and trace not inspected). Suspected race: `addProductToCart` navigated to `/checkout` right after the click. Commit e61fc1c now waits for the add-item response first; run 40502595593 passed (23 tests, one run only), so the fix is not proven.
 3. RESOLVED by observation: the city must match `GET /postcode-lookup` for the exact country string and postcode (see Checkout). Why the lookup returns a city unrelated to the real place is UNKNOWN.
 3a. Account lockout threshold on the public demo: customer@ is locked (423) as of 2026-10-27; what triggered it is UNKNOWN.
