@@ -106,6 +106,7 @@ Observed 2026-10-27 in GitHub Actions run 40439729196 (ubuntu-latest): the brows
 2a. Whether the postcode lookup auto-fills city/state in the UI is not observed; the test fills them explicitly.
 2b. The full text of `#order-confirmation` is not observed; the test only asserts it contains `INV-`.
 2c. Mobile checkout is not tested.
+2d. Checkout UI test flake: run 40502094783 (commit 2f9ce58, docs-only) failed on the first run and both retries with `expectCartHasItems(1)` receiving 0 `product-title` elements; the same test passed in run 40500276180. Cause UNKNOWN (failure screenshot and trace not inspected). Suspected race: `addProductToCart` navigated to `/checkout` right after the click. Commit e61fc1c now waits for the add-item response first; run 40502595593 passed (23 tests, one run only), so the fix is not proven.
 3. RESOLVED by observation: the city must match `GET /postcode-lookup` for the exact country string and postcode (see Checkout). Why the lookup returns a city unrelated to the real place is UNKNOWN.
 3a. Account lockout threshold on the public demo: customer@ is locked (423) as of 2026-10-27; what triggered it is UNKNOWN.
 4. Login failure response (wrong password) status and body, account lockout threshold (`failed_login_attempts` exists on the admin profile only).
