@@ -18,8 +18,9 @@ interface Fixtures {
 export const test = base.extend<Fixtures>({
   loginPage: async ({ page }, use) => use(new LoginPage(page)),
 
-  customerPage: async ({ browser }, use) => {
-    const context = await browser.newContext({ storageState: authFile('customer') });
+  // browser.newContext() ignores the project's device settings, so pass them on or the mobile project would run at desktop size.
+  customerPage: async ({ browser, viewport, isMobile, hasTouch, userAgent, deviceScaleFactor }, use) => {
+    const context = await browser.newContext({ storageState: authFile('customer'), viewport, isMobile, hasTouch, userAgent, deviceScaleFactor });
     await use(await context.newPage());
     await context.close();
   },
