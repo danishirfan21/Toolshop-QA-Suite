@@ -85,13 +85,6 @@ export class ApiClient {
     return body.data[0].name;
   }
 
-  /** Highest price in the catalog, read through the API's own descending price sort. */
-  async highestPrice(): Promise<number> {
-    const res = await this.send('get', '/products?sort=price,desc');
-    const body = (await res.json()) as { data: Array<{ price: number }> };
-    return Number(body.data[0].price);
-  }
-
   /** Admin only. */
   async createProduct(product: NewProduct): Promise<Product> {
     const res = await this.send('post', '/products', product);

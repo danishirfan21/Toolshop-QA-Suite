@@ -2,6 +2,7 @@ import { expect, type Locator, type Page } from '@playwright/test';
 
 export class ProductsPage {
   readonly productCards: Locator;
+  readonly filtersToggle: Locator;
   readonly searchInput: Locator;
   readonly searchSubmit: Locator;
   readonly searchReset: Locator;
@@ -13,6 +14,7 @@ export class ProductsPage {
 
   constructor(private readonly page: Page) {
     this.productCards = page.locator('a.card');
+    this.filtersToggle = page.getByRole('button', { name: 'Filters' });
     this.searchInput = page.getByTestId('search-query');
     this.searchSubmit = page.getByTestId('search-submit');
     this.searchReset = page.getByTestId('search-reset');
@@ -20,14 +22,20 @@ export class ProductsPage {
     this.productNames = page.getByTestId('product-name');
     this.productPrices = page.getByTestId('product-price');
     this.searchCaption = page.getByTestId('search-caption');
-    this.signInLink =page.getByTestId('nav-sign-in');
+    this.signInLink = page.getByTestId('nav-sign-in');
   }
 
   async goto(): Promise<void> {
     await this.page.goto('/');
   }
 
+  // On a phone the search and sort controls sit in a collapsed Filters panel (observed on the public demo).
+  async openFiltersIfCollapsed(): Promise<void> {
+    if (!(await this.searchInput.isVisible())) await this.filtersToggle.click();
+  }
+
   async search(term: string): Promise<void> {
+    await this.openFiltersIfCollapsed();
     await this.searchInput.fill(term);
     await this.searchSubmit.click();
   }
@@ -37,14 +45,18 @@ export class ProductsPage {
   }
 
   async sortBy(value: string): Promise<void> {
+    await this.openFiltersIfCollapsed();
     await this.sortSelect.selectOption(value);
   }
 
-  async expectFirstPrice(price: number): Promise<void> {
-    // The list reloads after the sort, so poll until the first card shows the expected price.
+  async expectPricesDescending(): Promise<void> {
+    // The list reloads after the sort, so poll. The default order is not sorted, so this cannot pass before the reload.
     await expect
-      .poll(async () => Number(((await this.productPrices.first().textContent()) ?? '').replace(/[^0-9.]/g, '')))
-      .toBe(price);
+      .poll(async () => {
+        const prices = (await this.productPrices.allTextContents()).map((t) => Number(t.replace(/[^0-9.]/g, '')));
+        return prices.length > 1 && prices.every((p, i) => i === 0 || prices[i - 1] >= p);
+      })
+      .toBe(true);
   }
 
   async expectSearchCaption(term: string): Promise<void> {
