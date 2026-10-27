@@ -52,8 +52,8 @@ Cart endpoints worked without a login in the probes where a customer token was s
 | --- | --- |
 | `POST /carts` | 201 `{id}` |
 | `POST /carts/{id}` `{product_id, quantity:1}` | 200 `{result:"item added or updated"}` |
-| same, `quantity:0` | 422 `{message:"The quantity field must be at least 1.", errors:{quantity:[...]}}` |
-| same, unknown `product_id` | 422 `{message:"The selected product id is invalid.", errors:{product_id:[...]}}` |
+| same, `quantity:0` | 422 `{message:"The quantity field must be at least 1.", errors:{quantity:[...]}}` (first recon). Re-observed 2026-10-27, with and without a token, on fresh carts: 404 `{message:"Resource not found"}`. Cause UNKNOWN. |
+| same, unknown `product_id` | 422 `{message:"The selected product id is invalid.", errors:{product_id:[...]}}` (first recon). Re-observed 2026-10-27: 404 `{message:"Resource not found"}`. Cause UNKNOWN. |
 | `GET /carts/{id}` | 200 `{id, additional_discount_percentage, lat, lng, cart_items[{id, quantity, discount_percentage, cart_id, product_id, product{...}}]}` |
 | `PUT /carts/{id}/product/quantity` | 200 `{result:"item added or updated"}` |
 

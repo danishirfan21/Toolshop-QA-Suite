@@ -52,9 +52,14 @@ export class ApiClient {
     return this.token;
   }
 
-  private async send(method: 'get' | 'post' | 'put' | 'delete', path: string, data?: unknown): Promise<APIResponse> {
+  /** Authenticated request. Returns the raw response so specs can assert on status and body. */
+  async call(method: 'get' | 'post' | 'put' | 'patch' | 'delete', path: string, data?: unknown): Promise<APIResponse> {
     const ctx = await this.ctx();
     return ctx[method](path, { data, headers: { Authorization: `Bearer ${await this.bearer()}` } });
+  }
+
+  private send(method: 'get' | 'post' | 'put' | 'delete', path: string, data?: unknown): Promise<APIResponse> {
+    return this.call(method, path, data);
   }
 
   async createCart(): Promise<string> {
