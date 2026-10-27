@@ -50,7 +50,10 @@ export class CheckoutPage {
 
   async addProductToCart(productId: string): Promise<void> {
     await this.page.goto(`/product/${productId}`);
+    // Navigating right after the click can cancel the cart requests, so wait for the add-item call to finish.
+    const added = this.page.waitForResponse((res) => /\/carts\/[^/]+$/.test(new URL(res.url()).pathname) && res.request().method() === 'POST');
     await this.addToCart.click();
+    expect((await added).ok()).toBe(true);
   }
 
   async openCart(): Promise<void> {
