@@ -74,10 +74,38 @@ export class CheckoutPage {
     await this.state.fill(address.state);
   }
 
+  async continueFromCart(): Promise<void> {
+    await this.proceedFromCart.click();
+  }
+
+  async continueFromSignIn(): Promise<void> {
+    await this.proceedFromSignIn.click();
+  }
+
+  async continueFromAddress(): Promise<void> {
+    await this.proceedFromAddress.click();
+  }
+
   async payCashOnDelivery(): Promise<void> {
     await this.paymentMethod.selectOption('cash-on-delivery');
     await this.finish.click();
     await expect(this.paymentSuccess).toBeVisible();
     await this.finish.click();
+  }
+
+  async expectOrderConfirmed(): Promise<void> {
+    await expect(this.orderConfirmation).toContainText('INV-');
+  }
+
+  // The logged-in cash on delivery journey, from a product page until the order is placed.
+  async checkoutCashOnDelivery(productId: string, address: CheckoutAddress): Promise<void> {
+    await this.addProductToCart(productId);
+    await this.openCart();
+    await this.expectCartHasItems(1);
+    await this.continueFromCart();
+    await this.continueFromSignIn();
+    await this.fillAddress(address);
+    await this.continueFromAddress();
+    await this.payCashOnDelivery();
   }
 }

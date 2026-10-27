@@ -79,6 +79,12 @@ export class ApiClient {
     return body.data[0].id;
   }
 
+  async firstProductName(): Promise<string> {
+    const res = await this.send('get', '/products');
+    const body = (await res.json()) as { data: Array<{ name: string }> };
+    return body.data[0].name;
+  }
+
   /** Admin only. */
   async createProduct(product: NewProduct): Promise<Product> {
     const res = await this.send('post', '/products', product);
