@@ -31,6 +31,10 @@ jobs:
       - run: npm run lint
       - run: npm run typecheck
 
+      # The upstream web image is linux/arm64 only (run 40490758359: exec format error on amd64), so emulate it.
+      - uses: docker/setup-qemu-action@v3
+        with:
+          platforms: arm64
       - name: Start Toolshop (upstream prod compose)
         working-directory: toolshop
         run: docker compose -f docker-compose.prod.yml up -d laravel-api angular-ui web mariadb
