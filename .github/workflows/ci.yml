@@ -11,7 +11,7 @@ env:
 jobs:
   test:
     runs-on: ubuntu-24.04
-    timeout-minutes: 30
+    timeout-minutes: 170
     env:
       # Self-hosted Toolshop (see the start step). The public demo is not used from CI because Cloudflare challenges runner IPs.
       BASE_URL: http://localhost:4200
@@ -63,6 +63,26 @@ jobs:
 
       - run: npx playwright install --with-deps chromium
       - run: npm test
+      - name: TEMP probe 3 (rate limit at 5x volume, checkout repeat at 4 workers, 2h lock expiry)
+        if: always()
+        run: |
+          H='Content-Type: application/json'; A='Accept: application/json'
+          echo "== rate limit: higher volume =="
+          seq 1 15000 | xargs -P 100 -I{} curl -s -o /dev/null -w '%{http_code}\n' "$API_URL/brands" | sort | uniq -c | sed 's/^/brands 15000 concurrent 100: /'
+          seq 1 7500 | xargs -P 100 -I{} curl -s -o /dev/null -w '%{http_code}\n' "$API_URL/products" | sort | uniq -c | sed 's/^/products 7500 concurrent 100: /'
+          echo "== rate limit: write endpoints =="
+          seq 1 1500 | xargs -P 50 -I{} curl -s -o /dev/null -w '%{http_code}\n' -X POST "$API_URL/carts" -H "$A" | sort | uniq -c | sed 's/^/POST carts 1500 concurrent 50: /'
+          seq 1 2000 | xargs -P 50 -I{} sh -c 'curl -s -o /dev/null -w "%{http_code}\n" -X POST "$API_URL/users/login" -H "Content-Type: application/json" -H "Accept: application/json" -d "{\"email\":\"nobody-{}@example.com\",\"password\":\"x\"}"' | sort | uniq -c | sed 's/^/POST login unknown users 2000 concurrent 50: /'
+          curl -s -D - -o /dev/null "$API_URL/brands" | tr -d '\r' | grep -i -E '^(HTTP|x-ratelimit|retry-after)' | sed 's/^/headers after burst: /'
+          echo "== checkout repeat =="
+          npx playwright test --project=setup --project=chromium-desktop --project=mobile-chrome tests/checkout --repeat-each=30 --workers=4 --reporter=line --trace=retain-on-failure || true
+          echo "== 2h lock expiry =="
+          EMAIL="probe-$(date +%s)@example.com"; PW='Qa-Suite#7731xZq!'
+          curl -s -o /dev/null -w 'register: %{http_code}\n' -X POST "$API_URL/users/register" -H "$H" -H "$A" -d "{\"first_name\":\"Probe\",\"last_name\":\"User\",\"address\":{\"street\":\"Test street\",\"city\":\"Amsterdam\",\"state\":\"NH\",\"country\":\"NL\",\"postal_code\":\"1122AB\"},\"phone\":\"0612345678\",\"dob\":\"1990-01-01\",\"email\":\"$EMAIL\",\"password\":\"$PW\"}"
+          login() { curl -s -o /tmp/l.out -w '%{http_code}' -X POST "$API_URL/users/login" -H "$H" -H "$A" -d "{\"email\":\"$EMAIL\",\"password\":\"$1\"}"; }
+          for i in 1 2 3 4; do echo "wrong $i: $(login wrong-password)"; done
+          T=0
+          for step in 1800 1800 1800 1800; do sleep $step; T=$((T+step)); echo "after ${T}s: $(login "$PW") $(head -c 120 /tmp/l.out)"; done
       - uses: actions/upload-artifact@v7
         if: always()
         with:
