@@ -7,7 +7,7 @@ test.describe('checkout (mobile)', () => {
     expect(customerPage.viewportSize()?.width).toBeLessThan(768);
 
     const productId = await customerApi.firstProductId();
-    const place = await (await customerApi.call('get', `/postcode-lookup?country=${address.country}&postcode=${address.postalCode}`)).json();
+    const place = await customerApi.postcodeLookup(address.country, address.postalCode);
 
     await customerCheckoutPage.checkoutCashOnDelivery(productId, { ...address, city: place.city, state: place.state });
     await customerCheckoutPage.expectOrderConfirmed();

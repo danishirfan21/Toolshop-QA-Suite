@@ -6,9 +6,9 @@
 | Status | CONFIRMED IN CI |
 | Found by | Scripted probing of the public demo by Claude Code (not a manual session by the repository owner) |
 | Triage | Not triaged by the repository owner |
-| Related case | TC-CHK-007 |
-| Automated test | `TC-CHK-007 BUG-001 ...` in `tests/api/checkout.api.spec.ts` (test.fail, passes while the bug exists) |
-| Environment | CI-hosted app at the pinned ref (CI probe run 40596218053: credit-card with `{}` returned 500 in 3 of 3 attempts; the automated test covers all three methods) and the public demo (2026-10-27 UTC) |
+| Related cases | TC-CHK-007 (credit-card), TC-CHK-011 (bank-transfer), TC-CHK-012 (buy-now-pay-later) |
+| Automated tests | `TC-CHK-007`, `TC-CHK-011`, `TC-CHK-012` (`BUG-001 ...`) in `tests/api/checkout.api.spec.ts`: one independent test per method, each with its own cart. Each is marked as an expected failure only when it observes a 500 with the body `Something went wrong`; a 401, 201 or other error fails normally, and a 422 passes. |
+| Environment | CI-hosted app at the pinned ref (CI probe run 40596218053: credit-card with `{}` returned 500 in 3 of 3 attempts; the automated tests cover all three methods) and the public demo (2026-10-27 UTC) |
 | Expected behavior basis (required fields) | UPSTREAM DOCS: `docs/user-stories/v5.md` at the pinned ref ae7caecb, section "Checkout - Payment (Advanced)", AC2 and AC3 list required fields for bank transfer and credit card. |
 | Expected behavior basis (422 instead of 500) | TESTER JUDGMENT: the upstream docs do not state an HTTP status. |
 

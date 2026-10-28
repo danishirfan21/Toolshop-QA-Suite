@@ -9,6 +9,8 @@
     "test": "playwright test",
     "test:desktop": "playwright test --project=chromium-desktop",
     "test:mobile": "playwright test --project=mobile-chrome",
+    "test:smoke": "playwright test --grep @smoke",
+    "test:regression": "playwright test --grep @regression",
     "test:api": "playwright test --project=api",
     "traceability": "tsx scripts/traceability.ts"
   },

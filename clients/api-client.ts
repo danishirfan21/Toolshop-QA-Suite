@@ -33,6 +33,7 @@ export class ApiClient {
   private context?: APIRequestContext;
   private token?: string;
   private expiresAt = 0;
+  private readonly carts: string[] = [];
 
   constructor(private readonly role: Role) {}
 
@@ -65,7 +66,16 @@ export class ApiClient {
   async createCart(): Promise<string> {
     const res = await this.send('post', '/carts');
     if (res.status() !== 201) throw new Error(`createCart failed: ${res.status()}`);
-    return ((await res.json()) as { id: string }).id;
+    const id = ((await res.json()) as { id: string }).id;
+    this.carts.push(id);
+    return id;
+  }
+
+  /** City and state for a postcode. Fails here with the real status, not later on an undefined city. */
+  async postcodeLookup(country: string, postcode: string): Promise<{ city: string; state: string }> {
+    const res = await this.send('get', `/postcode-lookup?country=${country}&postcode=${postcode}`);
+    if (res.status() !== 200) throw new Error(`postcodeLookup failed: ${res.status()}`);
+    return (await res.json()) as { city: string; state: string };
   }
 
   async addToCart(cartId: string, productId: string, quantity = 1): Promise<void> {
@@ -98,7 +108,20 @@ export class ApiClient {
     if (res.status() !== 204 && res.status() !== 404) throw new Error(`deleteProduct failed: ${res.status()}`);
   }
 
+  /**
+   * Best-effort removal of the carts this client created. DELETE /carts/{id} returned 204 once on CI-hosted without a token
+   * (docs/app-recon.md, UNKNOWN 5); it has not been checked with a customer token or for an ordered cart, so an unexpected
+   * status is logged, not thrown. Invoices have no known delete endpoint and are left in place.
+   */
+  private async deleteCarts(): Promise<void> {
+    for (const id of this.carts.splice(0)) {
+      const res = await this.send('delete', `/carts/${id}`).catch(() => undefined);
+      if (res && ![200, 204, 404].includes(res.status())) console.warn(`cart cleanup: DELETE /carts/${id} returned ${res.status()}`);
+    }
+  }
+
   async dispose(): Promise<void> {
+    await this.deleteCarts();
     await this.context?.dispose();
     this.context = undefined;
   }

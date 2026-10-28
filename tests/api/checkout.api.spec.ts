@@ -29,6 +29,28 @@ function invoiceBody(cartId: string, place: { city: string; state: string }, pay
   };
 }
 
+const BUG_001_BODY = 'Something went wrong';
+
+/**
+ * One payment method per test, each with its own cart. The 422 is the tester expectation (BUG-001).
+ * The test is marked as an expected failure only after the response is seen to be the documented 500
+ * with the documented body. Any other outcome (401, 201, a different 5xx or body) is a real failure,
+ * and a 422 passes normally, so a fix needs no test change.
+ */
+async function expectValidationNotServerError(api: ApiClient, request: APIRequestContext, method: string) {
+  const place = await lookup(request);
+  const cartId = await filledCart(api);
+  const res = await api.call('post', '/invoices', invoiceBody(cartId, place, { method, details: {} }));
+  const status = res.status();
+  const body = await res.text();
+
+  const knownDefect = status === 500 && body.includes(BUG_001_BODY);
+  test.info().annotations.push({ type: 'observed-status', description: `${method}: ${status}` });
+  test.fail(knownDefect, `BUG-001: ${method} with empty details answers 500 "${BUG_001_BODY}"; 422 is the tester expectation.`);
+
+  expect(status, `${method}: ${body}`).toBe(422);
+}
+
 const guest = { guest_first_name: 'Jane', guest_last_name: 'Doe', guest_email: 'jane.doe@example.com' };
 
 test.describe('checkout', () => {
@@ -81,14 +103,16 @@ test.describe('checkout', () => {
     expect(noToken.status()).toBe(401);
   });
 
-  test('TC-CHK-007 BUG-001 empty payment details are rejected with 422, not 500 @regression', async ({ customerApi, request }) => {
-    test.fail(true, 'BUG-001: credit-card, bank-transfer and buy-now-pay-later answer 500 for empty payment details; 422 is the tester expectation.');
-    const place = await lookup(request);
-    for (const method of ['credit-card', 'bank-transfer', 'buy-now-pay-later']) {
-      const cartId = await filledCart(customerApi);
-      const res = await customerApi.call('post', '/invoices', invoiceBody(cartId, place, { method, details: {} }));
-      expect(res.status(), method).toBe(422);
-    }
+  test('TC-CHK-007 BUG-001 credit card with empty payment details is rejected with 422, not 500 @regression', async ({ customerApi, request }) => {
+    await expectValidationNotServerError(customerApi, request, 'credit-card');
+  });
+
+  test('TC-CHK-011 BUG-001 bank transfer with empty payment details is rejected with 422, not 500 @regression', async ({ customerApi, request }) => {
+    await expectValidationNotServerError(customerApi, request, 'bank-transfer');
+  });
+
+  test('TC-CHK-012 BUG-001 buy now, pay later with empty payment details is rejected with 422, not 500 @regression', async ({ customerApi, request }) => {
+    await expectValidationNotServerError(customerApi, request, 'buy-now-pay-later');
   });
 
   test('TC-CHK-010 BUG-002 an ordered cart no longer holds its items @regression', async ({ customerApi, request }) => {

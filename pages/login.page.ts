@@ -1,4 +1,5 @@
 import { expect, type Locator, type Page } from '@playwright/test';
+import { env } from '../utils/env';
 
 export class LoginPage {
   readonly form: Locator;
@@ -29,5 +30,17 @@ export class LoginPage {
 
   async expectLeftLoginPage(): Promise<void> {
     await expect(this.page).not.toHaveURL(/\/auth\/login/);
+  }
+
+  /**
+   * Evidence of an authenticated session, beyond leaving /auth/login (docs/app-recon.md, Front end storage and Authentication):
+   * the front end stores the JWT in localStorage under `auth-token`, and GET /users/me answers 200 with a valid token (401 without).
+   */
+  async expectAuthenticated(): Promise<void> {
+    await this.expectLeftLoginPage();
+    await expect.poll(() => this.page.evaluate(() => window.localStorage.getItem('auth-token')), { message: 'auth-token in localStorage' }).toBeTruthy();
+    const token = await this.page.evaluate(() => window.localStorage.getItem('auth-token'));
+    const me = await this.page.request.get(`${env.apiUrl}/users/me`, { headers: { Authorization: `Bearer ${token}` } });
+    expect(me.status(), 'GET /users/me with the stored token').toBe(200);
   }
 }
