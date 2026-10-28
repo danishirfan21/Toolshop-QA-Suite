@@ -9,6 +9,7 @@
 | Related case | TC-CHK-007 |
 | Automated test | `TC-CHK-007 BUG-001 ...` in `tests/api/checkout.api.spec.ts` (test.fail, passes while the bug exists) |
 | Environment | CI-hosted app at the pinned ref (CI probe run 40596218053: credit-card with `{}` returned 500 in 3 of 3 attempts; the automated test covers all three methods) and the public demo (2026-10-27 UTC) |
+| Expected behavior basis | UPSTREAM DOCS: `docs/user-stories/v5.md` at the pinned ref ae7caecb, section "Checkout - Payment (Advanced)", AC2 and AC3 list required fields for bank transfer and credit card. The upstream docs do not state an HTTP status; the choice of 422 over 500 is tester judgment. |
 
 ## Steps
 1. Log in as the customer and create a cart with one product.

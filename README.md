@@ -42,7 +42,7 @@ Status values: CONFIRMED IN CI means reproduced against the CI-hosted app at the
 | [BUG-002 The cart still holds its items after an order](docs/bug-reports/BUG-002-cart-not-cleared-after-order.md) | CONFIRMED IN CI (API level) | TC-CHK-010 |
 | [BUG-003 Fractional quantity shows a line price the server rejected](docs/bug-reports/BUG-003-fractional-quantity-line-price.md) | CONFIRMED IN CI | TC-CART-005 |
 
-Notes: that an ordered cart should be emptied (BUG-002) and that empty payment details should give a 422 (BUG-001) are tester expectations, not statements from the upstream docs. A `test.fail` test also passes when it fails for an unrelated reason, so the BUG-003 assertion was checked against the public demo and failed there with the expected mismatch ($35.38 line price against a $14.15 total).
+Notes: each report has an "Expected behavior basis" line citing the upstream user story it rests on. Upstream says the cart is cleared after an order (BUG-002, UI wording) and lists the payment fields as required (BUG-001), but it does not state the HTTP status, so the 422 expectation for BUG-001 is tester judgment. A `test.fail` test also passes when it fails for an unrelated reason, so the BUG-003 assertion was checked against the public demo and failed there with the expected mismatch ($35.38 line price against a $14.15 total).
 
 ## Exploratory notes
 
@@ -122,7 +122,7 @@ CI duration of the last four non-probe `main` runs (runs 40566996374, 4058647441
 
 - Probe first. Behavior was not assumed: where the app's behavior was not verified, the case says UNKNOWN and temporary CI probe runs against the self-hosted app recorded the facts in [docs/app-recon.md](docs/app-recon.md) before tests depended on them. Probes were removed after use.
 - The `/test-plan` command in `.claude/commands/test-plan.md` turns a user story into test cases using the template in `docs/templates/test-case.md`.
-- Claude Code (Claude Sonnet 5.5) co-authored the work: all 36 commits on `main` at the time of writing carry a `Co-Authored-By: Claude Sonnet 5.5` trailer in the git log.
+- Claude Code (Claude Sonnet 5.5) co-authored the work: 37 of the 37 commits on `main` carried a `Co-Authored-By: Claude Sonnet 5.5` trailer when counted on 2026-10-28 (`git log origin/main`).
 - Every change goes through a pull request and a green CI run before a squash merge.
 
 ## Conventions

@@ -183,7 +183,7 @@ Environment labels: "CI-hosted" is the self-hosted Toolshop at the pinned TOOLSH
 | 1 | POST /invoices with each method and {} details | 422 (observed 500 on demo and CI-hosted, see BUG-001) |
 
 ## Notes and open questions
-- BUG-001. The 422 expectation is a tester judgment; the test is test.fail until triaged.
+- BUG-001. The 422 expectation is a tester judgment (upstream only lists the fields as required); the test is test.fail until triaged.
 
 # Test case: TC-CHK-008 Gift card payment accepted format
 
@@ -245,7 +245,7 @@ Environment labels: "CI-hosted" is the self-hosted Toolshop at the pinned TOOLSH
 | Priority | P2 |
 | Type | API |
 | Automation | Automate |
-| Reason for automation decision | Reproduced on CI-hosted (BUG-002). Marked test.fail; the expectation is a tester assumption. |
+| Reason for automation decision | Reproduced on CI-hosted (BUG-002). Marked test.fail. Upstream docs/user-stories/v5.md says the cart is cleared after an order (UI wording). |
 | Source (story or recon section) | CHK story; docs/exploratory-notes.md |
 
 ## Preconditions
@@ -259,7 +259,7 @@ Environment labels: "CI-hosted" is the self-hosted Toolshop at the pinned TOOLSH
 | 2 | GET /carts/{id} | 404 or an empty cart (observed: 200 with 1 item, see BUG-002) |
 
 ## Notes and open questions
-- Whether an ordered cart should be emptied is not stated in the sources read.
+- Upstream docs/user-stories/v5.md (Checkout - Payment (Advanced), AC9) says the cart is cleared after a successful order. It does not describe the API cart endpoints after an invoice.
 
 **Assumptions**
 - Postcode NL / 1122AB resolves through /postcode-lookup (Checkout).
@@ -268,7 +268,7 @@ Environment labels: "CI-hosted" is the self-hosted Toolshop at the pinned TOOLSH
 - The UI flow is cash on delivery via /checkout (Checkout).
 
 **Open questions**
-- Whether an ordered cart should be emptied (TC-CHK-010).
+- Whether the API cart, and not only the UI, should be cleared after an invoice (TC-CHK-010).
 - Full order confirmation text.
 - Whether the 500 on empty card, bank and installment details is intended.
 - Mobile layout details of the checkout.
