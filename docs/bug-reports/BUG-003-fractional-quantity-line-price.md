@@ -9,6 +9,7 @@
 | Related case | TC-CART-005 |
 | Automated test | `TC-CART-005 BUG-003 ...` in `tests/cart/cart.desktop.spec.ts` (test.fail, passes while the bug exists) |
 | Environment | CI-hosted app at the pinned ref (probe run 40596218053: line $35.38 against total $14.15 in 3 of 3 attempts, desktop Chromium) and the public demo (2026-10-27 UTC) |
+| Expected behavior basis | UPSTREAM DOCS: `docs/user-stories/v5.md` at the pinned ref ae7caecb, section "Checkout - Cart Review", AC2: after a quantity change "the item total and cart total are recalculated". The upstream docs do not say how a non-integer quantity should be handled. |
 
 ## Steps
 1. Add a product priced $14.15 to the cart and open `/checkout`.

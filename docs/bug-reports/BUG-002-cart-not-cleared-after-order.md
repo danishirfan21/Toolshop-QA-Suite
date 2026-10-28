@@ -10,6 +10,7 @@
 | Related case | TC-CHK-010 (also TC-CHK-001, TC-CHK-005) |
 | Automated test | `TC-CHK-010 BUG-002 ...` in `tests/api/checkout.api.spec.ts` (test.fail, passes while the bug exists) |
 | Environment | CI-hosted app at the pinned ref (probe run 40596218053: `GET /carts/{id}` returned 200 with 1 item after a 201 invoice, 3 of 3 attempts) and the public demo (2026-10-27 UTC) |
+| Expected behavior basis | UPSTREAM DOCS: `docs/user-stories/v5.md` at the pinned ref ae7caecb, section "Checkout - Payment (Advanced)", AC9: after a successful order "the cart is cleared". The statement is written for the checkout UI; the upstream docs do not describe the API cart endpoints after an invoice. |
 
 ## Steps (UI)
 1. As a guest, add a product, go to `/checkout`, continue as guest, fill the address (NL / 1122AB / 98), pay cash on delivery.
@@ -21,7 +22,7 @@
 2. `GET /carts/{id}`.
 
 ## Expected
-An ordered cart is emptied or no longer usable, so the same items are not ordered twice. This expectation is my assumption; the recon and the upstream docs I read do not state it.
+An ordered cart is emptied or no longer usable, so the same items are not ordered twice. The upstream user story states the cart is cleared after a successful order (see the basis line above).
 
 ## Actual
 - UI: the badge showed 1 right after the order, and `/checkout` listed 1 row afterwards.
