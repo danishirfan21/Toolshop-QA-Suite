@@ -236,6 +236,31 @@ Environment labels: "CI-hosted" is the self-hosted Toolshop at the pinned TOOLSH
 ## Notes and open questions
 - Walked in Stage 2B (docs/exploratory-notes.md).
 
+# Test case: TC-CHK-010 An ordered cart no longer holds its items
+
+| Field | Value |
+| --- | --- |
+| ID | TC-CHK-010 |
+| Title | An ordered cart no longer holds its items |
+| Priority | P2 |
+| Type | API |
+| Automation | Automate |
+| Reason for automation decision | Reproduced on CI-hosted (BUG-002). Marked test.fail; the expectation is a tester assumption. |
+| Source (story or recon section) | CHK story; docs/exploratory-notes.md |
+
+## Preconditions
+- A cart with one product.
+## Test data
+- Valid cash-on-delivery invoice body.
+## Steps
+| # | Action | Expected result |
+| --- | --- | --- |
+| 1 | POST /invoices | 201 |
+| 2 | GET /carts/{id} | 404 or an empty cart (observed: 200 with 1 item, see BUG-002) |
+
+## Notes and open questions
+- Whether an ordered cart should be emptied is not stated in the sources read.
+
 **Assumptions**
 - Postcode NL / 1122AB resolves through /postcode-lookup (Checkout).
 - Guest fields guest_first_name, guest_last_name, guest_email are required (Checkout).
@@ -243,8 +268,7 @@ Environment labels: "CI-hosted" is the self-hosted Toolshop at the pinned TOOLSH
 - The UI flow is cash on delivery via /checkout (Checkout).
 
 **Open questions**
-- Accepted gift-card format.
-- Cart state after an invoice is created.
+- Whether an ordered cart should be emptied (TC-CHK-010).
 - Full order confirmation text.
 - Whether the 500 on empty card, bank and installment details is intended.
 - Mobile layout details of the checkout.
