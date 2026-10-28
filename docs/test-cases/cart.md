@@ -111,21 +111,21 @@ Environment labels: "CI-hosted" is the self-hosted Toolshop at the pinned TOOLSH
 | Title | Cart quantity edits in the UI |
 | Priority | P2 |
 | Type | UI |
-| Automation | Keep manual |
-| Reason for automation decision | Quantity input behavior in the cart page was not probed; locators and expected totals are UNKNOWN. |
-| Source (story or recon section) | CART story; docs/app-recon.md UNKNOWN |
+| Automation | Automate |
+| Reason for automation decision | Only the fractional quantity check is automated, as a test.fail for BUG-003 (reproduced on CI-hosted). Other quantity edits were explored manually, see docs/exploratory-notes.md. |
+| Source (story or recon section) | CART story; docs/exploratory-notes.md |
 
 ## Preconditions
 - A product in the cart.
 ## Test data
-- UNKNOWN
+- Quantity 2.5 typed into product-quantity.
 ## Steps
 | # | Action | Expected result |
 | --- | --- | --- |
-| 1 | Change the quantity and the total in the cart page | UNKNOWN |
+| 1 | Type 2.5 into the quantity field and leave it | The line price equals the cart total (observed: PUT 422, line $35.38, total $14.15, see BUG-003) |
 
 ## Notes and open questions
-- For Stage 2B.
+- Marked test.fail while BUG-003 is open.
 
 **Assumptions**
 - Cart endpoints and responses as in Cart.
@@ -134,4 +134,4 @@ Environment labels: "CI-hosted" is the self-hosted Toolshop at the pinned TOOLSH
 **Open questions**
 - Why quantity 0 and unknown product returned 422 once and 404 later.
 - Whether anonymous carts are intended.
-- Cart page quantity behavior in the UI.
+- Whether a fractional quantity should be corrected by the UI.

@@ -15,6 +15,8 @@ export class CheckoutPage {
   readonly cartTotal: Locator;
   readonly proceedFromCart: Locator;
   readonly proceedFromSignIn: Locator;
+  readonly quantityInput: Locator;
+  readonly linePrice: Locator;
   readonly guestTab: Locator;
   readonly guestEmail: Locator;
   readonly guestFirstName: Locator;
@@ -40,6 +42,8 @@ export class CheckoutPage {
     this.cartTotal = page.getByTestId('cart-total');
     this.proceedFromCart = page.getByTestId('proceed-1');
     this.proceedFromSignIn = page.getByTestId('proceed-2');
+    this.quantityInput = page.getByTestId('product-quantity');
+    this.linePrice = page.getByTestId('line-price').first();
     this.guestTab = page.getByRole('tab', { name: 'Continue as Guest' });
     this.guestEmail = page.getByTestId('guest-email');
     this.guestFirstName = page.getByTestId('guest-first-name');
@@ -84,6 +88,19 @@ export class CheckoutPage {
     await this.street.fill(address.street);
     await this.city.fill(address.city);
     await this.state.fill(address.state);
+  }
+
+  async setCartQuantity(value: string): Promise<void> {
+    const updated = this.page.waitForResponse((res) => /\/carts\/[^/]+\/product\/quantity$/.test(new URL(res.url()).pathname) && res.request().method() === 'PUT');
+    await this.quantityInput.fill(value);
+    await this.quantityInput.blur();
+    await updated;
+  }
+
+  // With one item in the cart the line price must equal the cart total.
+  async expectLinePriceMatchesTotal(): Promise<void> {
+    const total = (await this.cartTotal.textContent()) ?? '';
+    await expect(this.linePrice).toHaveText(total.trim());
   }
 
   async continueFromCart(): Promise<void> {

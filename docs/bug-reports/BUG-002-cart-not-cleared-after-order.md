@@ -3,9 +3,13 @@
 | Field | Value |
 | --- | --- |
 | Severity | Medium |
-| Status | Open, candidate. API level confirmed on CI-hosted; UI differs by flow (see Actual) |
-| Related case | TC-CHK-001, TC-CHK-005 |
-| Environment | Public demo 2026-10-27 UTC and CI-hosted app at the pinned ref (probe run). |
+| Status | CONFIRMED IN CI |
+| Found by | Scripted probing of the public demo by Claude Code (not a manual session by the repository owner) |
+| Triage | Not triaged by the repository owner |
+| Scope | API level only. The logged-in UI on CI-hosted showed an empty cart after the order. |
+| Related case | TC-CHK-010 (also TC-CHK-001, TC-CHK-005) |
+| Automated test | `TC-CHK-010 BUG-002 ...` in `tests/api/checkout.api.spec.ts` (test.fail, passes while the bug exists) |
+| Environment | CI-hosted app at the pinned ref (probe run 40596218053: `GET /carts/{id}` returned 200 with 1 item after a 201 invoice, 3 of 3 attempts) and the public demo (2026-10-27 UTC) |
 
 ## Steps (UI)
 1. As a guest, add a product, go to `/checkout`, continue as guest, fill the address (NL / 1122AB / 98), pay cash on delivery.

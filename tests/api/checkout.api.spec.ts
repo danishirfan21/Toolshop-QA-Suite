@@ -81,14 +81,27 @@ test.describe('checkout', () => {
     expect(noToken.status()).toBe(401);
   });
 
-  // BUG-001: these methods answer 500 "Something went wrong" for empty payment details instead of a 422. test.fail keeps CI green while it is open and fails the run once it is fixed.
-  test.fail('TC-CHK-007 empty payment details are rejected with 422, not 500 @regression', async ({ customerApi, request }) => {
+  test('TC-CHK-007 BUG-001 empty payment details are rejected with 422, not 500 @regression', async ({ customerApi, request }) => {
+    test.fail(true, 'BUG-001: credit-card, bank-transfer and buy-now-pay-later answer 500 for empty payment details; 422 is the tester expectation.');
     const place = await lookup(request);
     for (const method of ['credit-card', 'bank-transfer', 'buy-now-pay-later']) {
       const cartId = await filledCart(customerApi);
       const res = await customerApi.call('post', '/invoices', invoiceBody(cartId, place, { method, details: {} }));
       expect(res.status(), method).toBe(422);
     }
+  });
+
+  test('TC-CHK-010 BUG-002 an ordered cart no longer holds its items @regression', async ({ customerApi, request }) => {
+    test.fail(true, 'BUG-002: GET /carts/{id} still returns the items after POST /invoices (201). That an ordered cart should be emptied is a tester assumption.');
+    const place = await lookup(request);
+    const cartId = await filledCart(customerApi);
+    expect((await customerApi.call('post', '/invoices', invoiceBody(cartId, place))).status()).toBe(201);
+
+    const after = await customerApi.call('get', `/carts/${cartId}`);
+    // A removed cart answers 404 with no cart_items; either outcome means no items are left.
+    const body = (await after.json().catch(() => ({}))) as { cart_items?: unknown[] };
+    const items = (body.cart_items ?? []).length;
+    expect(items).toBe(0);
   });
 
   test('TC-CHK-008 gift card needs a 16 character number and a 4 character code @regression', async ({ customerApi, request }) => {
