@@ -17,32 +17,32 @@ By default the tests run against the public demo at https://practicesoftwaretest
 | Cart (CART) | `docs/test-cases/cart.md` | add items, quantity limits |
 | Catalog (CAT) | `docs/test-cases/catalog.md` | browse, sort, search on desktop and phone |
 
-Facts about the app are in [docs/app-recon.md](docs/app-recon.md); anything not verified there is marked UNKNOWN. The planned coverage is in [docs/test-plan.md](docs/test-plan.md).
+Facts about the app are in [docs/app-recon.md](docs/app-recon.md); anything not verified there is marked UNKNOWN. The coverage plan is in [docs/test-plan.md](docs/test-plan.md). Data cleanup limits are in [docs/test-data-cleanup.md](docs/test-data-cleanup.md), and charters for manual sessions that have not been run yet are in [docs/manual-charters.md](docs/manual-charters.md).
 
-## Numbers (measured on 2026-10-28)
+## Numbers (measured on 2026-10-29, local static checks only; the tests were not executed locally)
 
 | Measure | Value | How measured |
 | --- | --- | --- |
-| Tests in `npx playwright test --list` | 27 | 16 `api`, 6 `chromium-desktop`, 3 `mobile-chrome`, 2 `setup` |
-| Test cases written | 29 | `npm run traceability` |
-| Cases automated / kept manual | 25 / 4 | `npm run traceability` |
+| Tests in `npx playwright test --list` | 29 | 18 `api`, 6 `chromium-desktop`, 3 `mobile-chrome`, 2 `setup` |
+| Test cases written | 31 | `npm run traceability` |
+| Cases automated / kept manual | 27 / 4 | `npm run traceability` |
 | Defect reports | 3 | `docs/bug-reports/` |
 
 ## Traceability
 
-`npm run traceability` reads the cases in `docs/test-cases/*.md` and the case IDs in spec titles, writes [docs/traceability.md](docs/traceability.md), and exits with an error if an Automate case has no spec, a spec cites an unknown case, a Keep manual case has a spec, an ID is duplicated, or a test title has no case ID. CI runs it on every push and pull request.
+`npm run traceability` reads the cases in `docs/test-cases/*.md` and the case IDs in spec titles, writes [docs/traceability.md](docs/traceability.md), and exits with an error if an Automate case has no spec, a spec cites an unknown case, a Keep manual case has a spec, an ID is duplicated, or a test title has no case ID. It strips comments before scanning, and it also reports a `test()` title that is not a plain string literal or is a template with a substitution (the ID must be readable in the source), and a skipped or `fixme` test that carries a case ID. It still uses regular expressions, not a TypeScript parser, so a title built in other ways than a string literal has to be written as a literal. CI runs it on every push and pull request.
 
 ## Defects
 
-Status values: CONFIRMED IN CI means reproduced against the CI-hosted app at the pinned ref. OBSERVED ON PUBLIC DEMO ONLY and NOT REPRODUCED are the other values; none of the current reports use them. The reports were found by scripted probing by Claude Code and have not been triaged by the repository owner. Each confirmed defect has a test marked `test.fail`, which passes while the defect exists and fails once it is fixed.
+Status values: CONFIRMED IN CI means reproduced against the CI-hosted app at the pinned ref. OBSERVED ON PUBLIC DEMO ONLY and NOT REPRODUCED are the other values; none of the current reports use them. The reports were found by scripted probing by Claude Code and have not been triaged by the repository owner. Each confirmed defect has a test that is expected to fail while the defect exists (`test.fail`). BUG-001 has one test per payment method (TC-CHK-007, 011, 012); once the 500 is fixed to a 422 they pass normally, and the expected-failure mark is only applied when the 500 is seen.
 
 | Report | Status | Automated test |
 | --- | --- | --- |
-| [BUG-001 Invoice with empty payment details returns 500](docs/bug-reports/BUG-001-payment-details-500.md) | CONFIRMED IN CI | TC-CHK-007 |
+| [BUG-001 Invoice with empty payment details returns 500](docs/bug-reports/BUG-001-payment-details-500.md) | CONFIRMED IN CI | TC-CHK-007, TC-CHK-011, TC-CHK-012 |
 | [BUG-002 The cart still holds its items after an order](docs/bug-reports/BUG-002-cart-not-cleared-after-order.md) | CONFIRMED IN CI (API level) | TC-CHK-010 |
 | [BUG-003 Fractional quantity shows a line price the server rejected](docs/bug-reports/BUG-003-fractional-quantity-line-price.md) | CONFIRMED IN CI | TC-CART-005 |
 
-Notes: each report has an "Expected behavior basis" line citing the upstream user story it rests on. Upstream says the cart is cleared after an order (BUG-002, UI wording) and lists the payment fields as required (BUG-001), but it does not state the HTTP status, so the 422 expectation for BUG-001 is tester judgment. A `test.fail` test also passes when it fails for an unrelated reason, so the BUG-003 assertion was checked against the public demo and failed there with the expected mismatch ($35.38 line price against a $14.15 total).
+Notes: each report has an "Expected behavior basis" line citing the upstream user story it rests on. Upstream says the cart is cleared after an order (BUG-002, UI wording) and lists the payment fields as required (BUG-001), but it does not state the HTTP status, so the 422 expectation for BUG-001 is tester judgment. A bare `test.fail(true, ...)` also passes when it fails for an unrelated reason. The BUG-001 tests avoid that: they are marked as expected failures only after the response is seen to be a 500 with the body `Something went wrong`, so a 401, a 201 or another error fails normally. For BUG-003 the assertion was checked against the public demo and failed there with the expected mismatch ($35.38 line price against a $14.15 total).
 
 ## Exploratory notes
 
@@ -79,7 +79,7 @@ Fixtures (`fixtures/index.ts`): `loginPage`, `customerPage`, `adminPage`, `produ
 | CI self-hosts the upstream app at a pinned commit | Run CI against the public demo | The public demo serves a Cloudflare challenge to CI runner IPs (noted in `ci.yml`), and a pinned commit keeps results repeatable. |
 | Locators only in page objects, enforced by ESLint | Locators written in specs | One place to fix a changed locator, and specs read as steps. |
 | Login once per role and reuse storageState | Log in inside every test | Fewer login calls, and the public demo locks accounts after repeated failures. |
-| Test data created and removed through the API client | Create data through the UI | Setup does not depend on UI steps. |
+| Test data created through the API client, removed where a delete endpoint exists | Create data through the UI | Setup does not depend on UI steps. |
 | `test.fail` for confirmed open defects | `test.skip`, or asserting the buggy behavior | The suite stays green while a defect is open and reports when it is fixed, without hiding the check or pinning wrong behavior. |
 | Traceability generated from case files and spec titles | A hand-kept spreadsheet | The script fails CI when a case and a spec drift apart. |
 | Dependencies pinned to exact versions | Version ranges | Repeatable installs. |
@@ -96,6 +96,8 @@ npm test
 ```
 
 `npm run test:api`, `npm run test:desktop` and `npm run test:mobile` run one project each.
+
+`npm run test:smoke` runs the tests tagged `@smoke` and `npm run test:regression` those tagged `@regression` (Playwright's `--grep`). The two `authenticate as ...` setup tests carry both tags, because `--grep` also filters the setup project that the browser projects depend on; without the tags the stored login would not be created.
 
 ### Environment variables
 
@@ -121,7 +123,7 @@ CI duration of the last four non-probe `main` runs (runs 40566996374, 4058647441
 ## How this was built
 
 - Probe first. Behavior was not assumed: where the app's behavior was not verified, the case says UNKNOWN and temporary CI probe runs against the self-hosted app recorded the facts in [docs/app-recon.md](docs/app-recon.md) before tests depended on them. Probes were removed after use.
-- The `/test-plan` command in `.claude/commands/test-plan.md` turns a user story into test cases using the template in `docs/templates/test-case.md`.
+- The `/test-plan` command in `.claude/commands/test-plan.md` turns a user story into test cases using the template in `docs/templates/test-case.md`, the recon in `docs/app-recon.md`, the risk priorities in `docs/test-plan.md` and the existing case IDs. It must write `UNKNOWN` for behavior the recon does not confirm and does not edit files unless asked. Example invocation (the output is not reproduced here, review it before saving): `/test-plan As a customer I can view my profile after logging in`. Its cases still need the owner's review, and a case only becomes `Automate` once the behavior is confirmed.
 - Claude Code (Claude Sonnet 5.5) co-authored the work: 37 of the 37 commits on `main` carried a `Co-Authored-By: Claude Sonnet 5.5` trailer when counted on 2026-10-28 (`git log origin/main`).
 - Every change goes through a pull request and a green CI run before a squash merge.
 

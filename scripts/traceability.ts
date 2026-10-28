@@ -40,15 +40,44 @@ function readCases(): Case[] {
   return cases;
 }
 
-// Spec title -> ID. A title starts the first string argument of test(...).
+// Spec title -> ID. A title is the first string argument of test(...). Comments are removed first so
+// commented-out tests are not counted. A title that is not a plain string literal cannot be read
+// reliably (the ID must be visible in the source), so it is reported instead of silently skipped.
+function stripComments(text: string): string {
+  return text.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+}
+
 function readSpecs(): Map<string, string[]> {
   const specs = new Map<string, string[]>();
   for (const file of walk(testsDir).filter((f) => f.endsWith('.spec.ts'))) {
-    const text = readFileSync(file, 'utf8');
-    for (const match of text.matchAll(/\btest(?:\.(?:only|skip|fixme|fail))?\(\s*(['"`])(.*?)\1/g)) {
-      const found = match[2].match(ID);
+    const text = stripComments(readFileSync(file, 'utf8'));
+    for (const match of text.matchAll(/\btest(\.(?:only|skip|fixme|fail))?\(\s*(['"`])?/g)) {
+      const modifier = match[1];
+      const quote = match[2];
+      const rest = text.slice(match.index + match[0].length);
+      if (!quote) {
+        // test.skip(cond, ...), test.fixme(cond, ...) and test.fail(cond, ...) inside a body are annotations, not tests.
+        const isAnnotation = modifier === '.skip' || modifier === '.fixme' || modifier === '.fail';
+        if (!isAnnotation) errors.push(`${posix(file)}: a test() title is not a string literal near "${rest.slice(0, 40).replace(/\s+/g, ' ')}"`);
+        continue;
+      }
+      const end = rest.indexOf(quote);
+      const title = rest.slice(0, end);
+      if (quote === '`' && title.includes('${')) {
+        errors.push(`${posix(file)}: test title "${title}" is a template with a substitution, so its case ID cannot be checked`);
+        continue;
+      }
+      if (modifier === '.skip' || modifier === '.fixme') {
+        // Only a declaration (title followed by a callback) is a skipped test; test.skip('reason') style is not used here.
+        if (/^\s*,\s*(async\s*)?\(?/.test(rest.slice(end + 1)) && ID.test(title)) {
+          errors.push(`${posix(file)}: test "${title}" is skipped or fixme, so it cannot count as automated`);
+        }
+        continue;
+      }
+      if (modifier === '.fail') continue;
+      const found = title.match(ID);
       if (!found) {
-        errors.push(`${posix(file)}: test "${match[2]}" has no case ID`);
+        errors.push(`${posix(file)}: test "${title}" has no case ID`);
         continue;
       }
       specs.set(found[0], [...(specs.get(found[0]) ?? []), posix(file)]);
@@ -57,7 +86,7 @@ function readSpecs(): Map<string, string[]> {
   return specs;
 }
 
-const cases = readCases();
+const cases = readCases().sort((a, b) => a.id.localeCompare(b.id));
 const specs = readSpecs();
 const known = new Set<string>();
 

@@ -161,29 +161,80 @@ Environment labels: "CI-hosted" is the self-hosted Toolshop at the pinned TOOLSH
 ## Notes and open questions
 - Mobile layout details (navigation, field visibility) are UNKNOWN; the test relies on CI to show whether they matter.
 
-# Test case: TC-CHK-007 Credit card, bank transfer and buy-now-pay-later with empty details
+# Test case: TC-CHK-007 Credit card with empty payment details
 
 | Field | Value |
 | --- | --- |
 | ID | TC-CHK-007 |
-| Title | Credit card, bank transfer and buy-now-pay-later with empty details |
+| Title | Credit card with empty payment details |
 | Priority | P2 |
 | Type | API |
 | Automation | Automate |
-| Reason for automation decision | The test expects 422 and is marked test.fail while BUG-001 is open, so it does not pin the 500 and will flag the fix. |
+| Reason for automation decision | One independent test per payment method (own cart, own request), so one method failing never hides another. Expects 422 and is marked as an expected failure only when the documented BUG-001 response (500 with "Something went wrong") is observed; any other outcome fails normally. |
 | Source (story or recon section) | CHK story; docs/app-recon.md Checkout |
 
 ## Preconditions
-- A cart with one product exists.
+- A cart with one product is created by the test itself.
 ## Test data
-- Each of the three methods with {}.
+- Payment method `credit-card` with `payment_details: {}`. NL / 1122AB, city and state from the lookup.
 ## Steps
 | # | Action | Expected result |
 | --- | --- | --- |
-| 1 | POST /invoices with each method and {} details | 422 (observed 500 on demo and CI-hosted, see BUG-001) |
+| 1 | POST /invoices as the customer with `credit-card` and {} details | 422 (observed 500 `{"message":"Something went wrong"}` on demo and CI-hosted, see BUG-001) |
 
 ## Notes and open questions
-- BUG-001. The 422 expectation is a tester judgment (upstream only lists the fields as required); the test is test.fail until triaged.
+- BUG-001. The 422 expectation is a tester judgment (upstream only lists the fields as required, no status code). The observed 500 is recorded as an `observed-status` annotation on the test.
+- A 401, 201 or a different 5xx/body is not treated as BUG-001 and fails the test.
+
+# Test case: TC-CHK-011 Bank transfer with empty payment details
+
+| Field | Value |
+| --- | --- |
+| ID | TC-CHK-011 |
+| Title | Bank transfer with empty payment details |
+| Priority | P2 |
+| Type | API |
+| Automation | Automate |
+| Reason for automation decision | One independent test per payment method (own cart, own request), so one method failing never hides another. Expects 422 and is marked as an expected failure only when the documented BUG-001 response (500 with "Something went wrong") is observed; any other outcome fails normally. |
+| Source (story or recon section) | CHK story; docs/app-recon.md Checkout |
+
+## Preconditions
+- A cart with one product is created by the test itself.
+## Test data
+- Payment method `bank-transfer` with `payment_details: {}`. NL / 1122AB, city and state from the lookup.
+## Steps
+| # | Action | Expected result |
+| --- | --- | --- |
+| 1 | POST /invoices as the customer with `bank-transfer` and {} details | 422 (observed 500 `{"message":"Something went wrong"}` on demo and CI-hosted, see BUG-001) |
+
+## Notes and open questions
+- BUG-001. The 422 expectation is a tester judgment (upstream only lists the fields as required, no status code). The observed 500 is recorded as an `observed-status` annotation on the test.
+- A 401, 201 or a different 5xx/body is not treated as BUG-001 and fails the test.
+
+# Test case: TC-CHK-012 Buy now, pay later with empty payment details
+
+| Field | Value |
+| --- | --- |
+| ID | TC-CHK-012 |
+| Title | Buy now, pay later with empty payment details |
+| Priority | P2 |
+| Type | API |
+| Automation | Automate |
+| Reason for automation decision | One independent test per payment method (own cart, own request), so one method failing never hides another. Expects 422 and is marked as an expected failure only when the documented BUG-001 response (500 with "Something went wrong") is observed; any other outcome fails normally. |
+| Source (story or recon section) | CHK story; docs/app-recon.md Checkout |
+
+## Preconditions
+- A cart with one product is created by the test itself.
+## Test data
+- Payment method `buy-now-pay-later` with `payment_details: {}`. NL / 1122AB, city and state from the lookup.
+## Steps
+| # | Action | Expected result |
+| --- | --- | --- |
+| 1 | POST /invoices as the customer with `buy-now-pay-later` and {} details | 422 (observed 500 `{"message":"Something went wrong"}` on demo and CI-hosted, see BUG-001) |
+
+## Notes and open questions
+- BUG-001. The 422 expectation is a tester judgment (upstream only lists the fields as required, no status code). The observed 500 is recorded as an `observed-status` annotation on the test.
+- A 401, 201 or a different 5xx/body is not treated as BUG-001 and fails the test.
 
 # Test case: TC-CHK-008 Gift card payment accepted format
 

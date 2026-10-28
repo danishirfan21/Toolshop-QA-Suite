@@ -131,10 +131,10 @@ Environment labels: "CI-hosted" is the self-hosted Toolshop at the pinned TOOLSH
 | # | Action | Expected result |
 | --- | --- | --- |
 | 1 | Open /auth/login | The login form is visible |
-| 2 | Submit valid credentials | The page leaves /auth/login |
+| 2 | Submit valid credentials | The page leaves /auth/login, the JWT is stored in localStorage `auth-token`, and `GET /users/me` with that token returns 200 |
 
 ## Notes and open questions
-- The exact landing page is UNKNOWN, so only leaving the login page is asserted.
+- The exact landing page is UNKNOWN, so it is not asserted. Authentication is shown by the stored token and `GET /users/me` (docs/app-recon.md, Front end storage and Authentication), not by any visible UI element, because no authenticated UI locator has been confirmed.
 
 # Test case: TC-AUTH-006 Lockout through the UI
 

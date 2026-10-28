@@ -33,5 +33,5 @@ The UI's Price Range slider defaults to 1 to 100 (scale 0 to 200). The unfiltere
 
 - TC-CHK-008 (gift card) and TC-CHK-009 (guest UI checkout) now have enough information to be automated.
 - A CI-hosted probe (Stage 2C) confirmed: BUG-001 (500 on empty details), BUG-002 at the API level only (logged-in UI cart was empty after the order, unlike the demo guest flow), BUG-003 in the UI, the gift-card format, and the Accept-header explanation for 404 versus 422.
-- TC-CHK-007, 008, 009 are now automated, and TC-CART-003 asserts 422 with the header. TC-CHK-007 is test.fail while BUG-001 is open.
+- TC-CHK-007, 008, 009 are now automated, and TC-CART-003 asserts 422 with the header. TC-CHK-007 was later split into TC-CHK-007, 011 and 012 (one per payment method); they are expected failures only while the BUG-001 500 is observed.
 - Mobile layout: still not judged.
