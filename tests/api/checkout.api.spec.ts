@@ -92,7 +92,7 @@ test.describe('checkout', () => {
   });
 
   test('TC-CHK-010 BUG-002 an ordered cart no longer holds its items @regression', async ({ customerApi, request }) => {
-    test.fail(true, 'BUG-002: GET /carts/{id} still returns the items after POST /invoices (201). That an ordered cart should be emptied is a tester assumption.');
+    test.fail(true, 'BUG-002: GET /carts/{id} still returns the items after POST /invoices (201). Upstream user story v5 documents that the cart is cleared after a successful order (written for the UI), and the API cart persists.');
     const place = await lookup(request);
     const cartId = await filledCart(customerApi);
     expect((await customerApi.call('post', '/invoices', invoiceBody(cartId, place))).status()).toBe(201);

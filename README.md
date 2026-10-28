@@ -131,3 +131,5 @@ CI duration of the last four non-probe `main` runs (runs 40566996374, 4058647441
 - Retries are 0 locally and 2 on CI.
 - The test id attribute is `data-test`.
 - A test title carries its case ID (`TC-XXX-NNN`) and, for an open defect, the `BUG-NNN` ID.
+
+License: MIT

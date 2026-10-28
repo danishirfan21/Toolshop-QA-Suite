@@ -2,11 +2,11 @@
 
 These notes come from scripted probing of the public demo by Claude Code, using Playwright scripts and plain HTTP calls. They are not notes from a manual session by the repository owner, and no raw manual session logs exist in this repository.
 
-Run on 2026-10-27 UTC. Environment: the **public demo** (https://practicesoftwaretesting.com and https://api.practicesoftwaretesting.com) only, driven with scripted Playwright (desktop 1280x900) and plain HTTP calls. Nothing here was run against the CI-hosted app at the pinned ref, except where "CI-hosted" is named and the evidence is the earlier recon. The demo may be a different version, and its data is shared and changes: it had 59 products today, where the earlier recon saw 50.
+Run on 2026-10-27 UTC. Environment: the **public demo** (https://practicesoftwaretesting.com and https://api.practicesoftwaretesting.com) only, driven with scripted Playwright (desktop 1280x900) and plain HTTP calls. The observations below were made on the demo, except where "CI-hosted" is named. BUG-001, BUG-002 and BUG-003 were later reproduced against the CI-hosted app at the pinned ref (probe run 40596218053, see the bug reports). The demo may be a different version, and its data is shared and changes: it had 59 products today, where the earlier recon saw 50.
 
 Throwaway data created on the demo: one registered user (`lockout-ui-<ts>@example.com`, now locked), a handful of carts and about 12 invoices. No delete endpoint is known for them. The seeded customer was used only for valid logins and invoices, never for failed logins.
 
-Not covered: real-device layout (only emulation was used earlier, and no judgment was made here), and the CI-hosted confirmation of anything below.
+Not covered: real-device layout (only emulation was used earlier, and no judgment was made here). CI-hosted confirmation exists only for BUG-001 to BUG-003 (probe run 40596218053); the rest of this file is demo only.
 
 ## Results per case that was marked Keep manual
 
