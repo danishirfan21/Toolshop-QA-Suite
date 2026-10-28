@@ -29,5 +29,8 @@ An ordered cart is emptied or no longer usable, so the same items are not ordere
 - API: `GET /carts/{id}` returned 200 with `cart_items` still containing the product (demo and CI-hosted).
 - UI on CI-hosted, logged in: after the order the badge was absent and `/checkout` had 0 rows, so the UI does not show the problem in that flow. The demo guest flow did show it. Whether the difference is the guest versus logged-in flow or the app version is not established.
 
+## Open question for developers
+The UI cart is empty after an order while the API cart persists, so is cart cleanup the API's or the client's responsibility?
+
 ## Evidence
 Scripted runs on the demo on 2026-10-27, output recorded in `docs/exploratory-notes.md`.
